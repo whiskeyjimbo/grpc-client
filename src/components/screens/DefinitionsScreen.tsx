@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { CloudUpload, Wifi, Lock, Network, Server, Trash2, Layers, Globe, Search, Check, Zap, BookOpen, Play } from 'lucide-react';
 import type { Workspace, Environment, GrpcService } from '../../types.ts';
-import { getErrorMessage } from '../../lib/utils.ts';
+import { getErrorMessage, classifyReflectionError } from '../../lib/utils.ts';
 import { importProtoFiles, reflectDefinitions, isForcedDemoMode, setDemoMode, isDemoMode } from '../../api/index.ts';
 import { Toggle, ContextBadge, PanelHeader, SectionCard, EmptyState, SearchInput } from '../ui/index.ts';
 import { ConfirmDialog } from '../Dialogs.tsx';
@@ -58,47 +58,6 @@ export function DefinitionsScreen({
       services: Array.from(merged.values()),
     });
   }, [workspace, onUpdateWorkspace]);
-
-  const classifyReflectionError = (error: unknown): string => {
-    const msg = getErrorMessage(error).toLowerCase();
-
-    // TLS negotiation failures: check before "connection" patterns since they often co-occur
-    if (msg.includes('tls') || msg.includes('certificate') || msg.includes('x509') || msg.includes('handshake')) {
-      return 'TLS handshake failed: toggle the TLS switch and retry. The server may require plaintext, or your cert may not be trusted.';
-    }
-
-    // Connection-level failures: wrong address, server not running, firewall
-    if (
-      msg.includes('connect to') ||
-      msg.includes('connection refused') ||
-      msg.includes('no such host') ||
-      msg.includes('i/o timeout') ||
-      msg.includes('dial tcp')
-    ) {
-      return 'Could not reach the server: check the endpoint address and that the server is running.';
-    }
-
-    // Connected but timed out before finishing the dial
-    if (msg.includes('deadline exceeded') || msg.includes('context deadline')) {
-      return 'Connection timed out: the server is reachable but not responding. Check for firewall rules or a misconfigured port.';
-    }
-
-    // Reflection RPC not registered on the server
-    if (
-      msg.includes('unimplemented') ||
-      msg.includes('unknown service') ||
-      msg.includes('grpc.reflection')
-    ) {
-      return 'Server reflection is not enabled: add grpc.reflection.Register(s) to the server, or import a .proto file instead.';
-    }
-
-    // Auth / permission failure
-    if (msg.includes('unauthenticated') || msg.includes('permission denied') || msg.includes('unauthorized')) {
-      return 'Authentication required: add authorization headers in the Environments tab and retry.';
-    }
-
-    return `Reflection failed: ${getErrorMessage(error)}`;
-  };
 
   const handleConnectReflection = useCallback(async () => {
     const target = reflectionTarget.trim();

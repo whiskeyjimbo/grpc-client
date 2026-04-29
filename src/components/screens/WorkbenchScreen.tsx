@@ -9,7 +9,7 @@ import {
   Layers, Search, Terminal as TerminalIcon
 } from 'lucide-react';
 import type { Workspace, Environment, GrpcService, GrpcMethod, EnvVariable, HistoryItem, ViewType, MetadataHeader } from '../../types.ts';
-import { createEntityID, sanitizeRequestDataForFields, getErrorMessage, maskValue } from '../../lib/utils.ts';
+import { createEntityID, sanitizeRequestDataForFields, getErrorMessage, maskValue, cleanPayload } from '../../lib/utils.ts';
 import { WorkbenchSidebar } from './workbench/WorkbenchSidebar.tsx';
 import { executeRequest } from '../../api/index.ts';
 import { WorkspaceProvider, useWorkspace } from './workbench/WorkspaceContext.tsx';
@@ -231,20 +231,6 @@ function WorkbenchContent({
   const grpcurlCmd = useMemo(() => {
     if (!selectedMethod) return '# Select a method to preview the grpcurl command.';
 
-    const cleanPayload = (obj: Record<string, any>): Record<string, any> => {
-      const result: Record<string, any> = {};
-      for (const [k, v] of Object.entries(obj)) {
-        if (v === null || v === undefined || v === '') continue;
-        if (typeof v === 'object' && !Array.isArray(v)) {
-          const cleaned = cleanPayload(v);
-          if (Object.keys(cleaned).length > 0) result[k] = cleaned;
-        } else {
-          result[k] = v;
-        }
-      }
-      return result;
-    };
-
     const grpcPath = selectedMethod.fullName
       ? selectedMethod.fullName.replace(/\.([^.]+)$/, '/$1')
       : selectedMethod.name;
@@ -269,20 +255,6 @@ function WorkbenchContent({
 
   const curlCmd = useMemo(() => {
     if (!selectedMethod) return '# Select a method to preview the cURL command.';
-
-    const cleanPayload = (obj: Record<string, any>): Record<string, any> => {
-      const result: Record<string, any> = {};
-      for (const [k, v] of Object.entries(obj)) {
-        if (v === null || v === undefined || v === '') continue;
-        if (typeof v === 'object' && !Array.isArray(v)) {
-          const cleaned = cleanPayload(v);
-          if (Object.keys(cleaned).length > 0) result[k] = cleaned;
-        } else {
-          result[k] = v;
-        }
-      }
-      return result;
-    };
 
     const grpcPath = selectedMethod.fullName
       ? selectedMethod.fullName.replace(/\.([^.]+)$/, '/$1')

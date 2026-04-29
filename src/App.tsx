@@ -8,7 +8,7 @@ import { Play, RefreshCw, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ViewType, GrpcService, HistoryItem, Workspace, Environment } from './types.ts';
 import { MOCK_HISTORY, MOCK_WORKSPACES, MOCK_ENVIRONMENTS } from './lib/constants.ts';
-import { appendHistory, deleteEnvironment, deleteHistory, deleteHistoryBulk, deleteWorkspace, executeRequest, fetchBootstrap, importProtoFiles, reflectDefinitions, upsertEnvironment, upsertWorkspace, isDemoMode, setDemoMode, isForcedDemoMode } from './api/index.ts';
+import { appendHistory, deleteEnvironment, deleteHistory, deleteHistoryBulk, deleteWorkspace, fetchBootstrap, upsertEnvironment, upsertWorkspace, isDemoMode, setDemoMode, isForcedDemoMode } from './api/index.ts';
 import { DefinitionsScreen } from './components/screens/DefinitionsScreen.tsx';
 import { HistoryScreen } from './components/screens/HistoryScreen.tsx';
 import { VariablesScreen } from './components/screens/VariablesScreen.tsx';

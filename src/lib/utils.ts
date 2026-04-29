@@ -111,6 +111,91 @@ export const getLatencyColor = (ms: number, thresholds?: { slow: number; critica
 // gRPC status descriptions
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Relative time formatting
+// ---------------------------------------------------------------------------
+
+export const formatRelativeTime = (dateString: string): string => {
+  const date = new Date(dateString);
+  const diffMs = Date.now() - date.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffSecs < 60) return 'Just now';
+  if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+  if (diffHours < 24) return `${diffHours} hr${diffHours > 1 ? 's' : ''} ago`;
+  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  return date.toLocaleString();
+};
+
+// ---------------------------------------------------------------------------
+// gRPC reflection error classification
+// ---------------------------------------------------------------------------
+
+export const classifyReflectionError = (error: unknown): string => {
+  const msg = getErrorMessage(error).toLowerCase();
+
+  if (msg.includes('tls') || msg.includes('certificate') || msg.includes('x509') || msg.includes('handshake')) {
+    return 'TLS handshake failed: toggle the TLS switch and retry. The server may require plaintext, or your cert may not be trusted.';
+  }
+  if (
+    msg.includes('connect to') ||
+    msg.includes('connection refused') ||
+    msg.includes('no such host') ||
+    msg.includes('i/o timeout') ||
+    msg.includes('dial tcp')
+  ) {
+    return 'Could not reach the server: check the endpoint address and that the server is running.';
+  }
+  if (msg.includes('deadline exceeded') || msg.includes('context deadline')) {
+    return 'Connection timed out: the server is reachable but not responding. Check for firewall rules or a misconfigured port.';
+  }
+  if (msg.includes('unimplemented') || msg.includes('unknown service') || msg.includes('grpc.reflection')) {
+    return 'Server reflection is not enabled: add grpc.reflection.Register(s) to the server, or import a .proto file instead.';
+  }
+  if (msg.includes('unauthenticated') || msg.includes('permission denied') || msg.includes('unauthorized')) {
+    return 'Authentication required: add authorization headers in the Environments tab and retry.';
+  }
+  return `Reflection failed: ${getErrorMessage(error)}`;
+};
+
+// ---------------------------------------------------------------------------
+// Response search
+// ---------------------------------------------------------------------------
+
+export const countMatches = (text: string, query: string): number => {
+  if (!query) return 0;
+  let count = 0; let pos = 0;
+  const lower = text.toLowerCase();
+  const lowerQ = query.toLowerCase();
+  while ((pos = lower.indexOf(lowerQ, pos)) !== -1) { count++; pos += lowerQ.length; }
+  return count;
+};
+
+// ---------------------------------------------------------------------------
+// Request payload cleaning
+// ---------------------------------------------------------------------------
+
+export const cleanPayload = (obj: Record<string, any>): Record<string, any> => {
+  const result: Record<string, any> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v === null || v === undefined || v === '') continue;
+    if (typeof v === 'object' && !Array.isArray(v)) {
+      const cleaned = cleanPayload(v);
+      if (Object.keys(cleaned).length > 0) result[k] = cleaned;
+    } else {
+      result[k] = v;
+    }
+  }
+  return result;
+};
+
+// ---------------------------------------------------------------------------
+// gRPC status descriptions
+// ---------------------------------------------------------------------------
+
 export const GRPC_STATUS_DESCRIPTIONS: Record<number, string> = {
   0:  'Request completed successfully.',
   1:  'The client cancelled the request before the server finished.',

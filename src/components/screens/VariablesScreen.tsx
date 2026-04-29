@@ -354,6 +354,24 @@ const ChipWithTooltip: FC<{
   );
 };
 
+const COMMON_HEADERS = [
+  'authorization', 'grpc-timeout', 'content-type', 'user-agent',
+  'grpc-encoding', 'grpc-accept-encoding', 'te', 'x-request-id'
+];
+
+const TIER_STYLES = {
+  ENV:      { bg: 'bg-secondary/10', text: 'text-secondary', border: 'border-secondary/20', label: 'ENV',  borderFocus: 'focus:border-secondary' },
+  WS:       { bg: 'bg-primary/10',   text: 'text-primary',   border: 'border-primary/20',   label: 'WS',   borderFocus: 'focus:border-primary'   },
+  OVERRIDE: { bg: 'bg-tertiary/10',  text: 'text-tertiary',  border: 'border-tertiary/20',  label: 'OVR',  borderFocus: 'focus:border-tertiary'  },
+} as const;
+
+const TIER_CHIPS: { id: 'all' | 'ENV' | 'WS' | 'OVERRIDE'; label: string; activeClass: string }[] = [
+  { id: 'all',      label: 'All', activeClass: 'bg-surface-container-highest text-on-surface border-outline-variant/50' },
+  { id: 'ENV',      label: 'ENV', activeClass: 'bg-secondary/10 text-secondary border-secondary/20' },
+  { id: 'WS',       label: 'WS',  activeClass: 'bg-primary/10 text-primary border-primary/20' },
+  { id: 'OVERRIDE', label: 'OVR', activeClass: 'bg-tertiary/10 text-tertiary border-tertiary/20' },
+];
+
 export function VariablesScreen({
   environment,
   workspace,
@@ -384,17 +402,6 @@ export function VariablesScreen({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const addKeyInputRef = useRef<HTMLInputElement>(null);
 
-  const COMMON_HEADERS = [
-    'authorization', 'grpc-timeout', 'content-type', 'user-agent', 
-    'grpc-encoding', 'grpc-accept-encoding', 'te', 'x-request-id'
-  ];
-
-
-  const TIER_STYLES = {
-    ENV:      { bg: 'bg-secondary/10', text: 'text-secondary', border: 'border-secondary/20', label: 'ENV',  borderFocus: 'focus:border-secondary' },
-    WS:       { bg: 'bg-primary/10',   text: 'text-primary',   border: 'border-primary/20',   label: 'WS',   borderFocus: 'focus:border-primary'   },
-    OVERRIDE: { bg: 'bg-tertiary/10',  text: 'text-tertiary',  border: 'border-tertiary/20',  label: 'OVR',  borderFocus: 'focus:border-tertiary'  },
-  };
 
   const { allItems, resolvedItems } = useMemo(() => {
     const isVars = itemType === 'variables';
@@ -574,12 +581,6 @@ export function VariablesScreen({
     e.target.value = '';
   };
 
-  const TIER_CHIPS: { id: 'all' | 'ENV' | 'WS' | 'OVERRIDE'; label: string; activeClass: string }[] = [
-    { id: 'all', label: 'All', activeClass: 'bg-surface-container-highest text-on-surface border-outline-variant/50' },
-    { id: 'ENV', label: 'ENV', activeClass: 'bg-secondary/10 text-secondary border-secondary/20' },
-    { id: 'WS', label: 'WS', activeClass: 'bg-primary/10 text-primary border-primary/20' },
-    { id: 'OVERRIDE', label: 'OVR', activeClass: 'bg-tertiary/10 text-tertiary border-tertiary/20' },
-  ];
 
   const [showMap, setShowMap] = useState(false);
   const [mapAnchor, setMapAnchor] = useState<DOMRect | null>(null);

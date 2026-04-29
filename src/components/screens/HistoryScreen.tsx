@@ -10,25 +10,10 @@ import {
   MoreVertical, Calendar, ArrowUpDown, ChevronDown, ChevronRight, Tag, Box, Network, Layers, Globe, RefreshCw, Braces, Hash
 } from 'lucide-react';
 import type { HistoryItem } from '../../types.ts';
-import { getLatencyColor, GRPC_STATUS_DESCRIPTIONS, maskValue } from '../../lib/utils.ts';
+import { getLatencyColor, GRPC_STATUS_DESCRIPTIONS, maskValue, formatRelativeTime } from '../../lib/utils.ts';
 import { PanelHeader, CodeBlock, MonoKeyValue, EmptyState, FilterChipGroup, ContextBadge, SearchInput, JsonValue } from '../ui/index.ts';
 import { ConfirmDialog } from '../Dialogs.tsx';
 
-function formatRelativeTime(dateString: string) {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSecs = Math.floor(diffMs / 1000);
-  const diffMins = Math.floor(diffSecs / 60);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffSecs < 60) return 'Just now';
-  if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
-  if (diffHours < 24) return `${diffHours} hr${diffHours > 1 ? 's' : ''} ago`;
-  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-  return date.toLocaleString();
-}
 
 function LatencyDisplay({ latency, thresholds }: { latency: string, thresholds?: { slow: number; critical: number } }) {
   const ms = parseInt(latency, 10);

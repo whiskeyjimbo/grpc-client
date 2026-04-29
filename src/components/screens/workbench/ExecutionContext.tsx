@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Plus, Pencil, ChevronDown, ChevronUp, Server, Braces, Hash, 
@@ -14,6 +14,16 @@ import type { Workspace, Environment, EnvVariable, MetadataHeader, HistoryItem }
 import { createEntityID, maskValue, isSensitiveKey } from '../../../lib/utils.ts';
 import { ContextBadge, ChipTooltip } from '../../ui/index.ts';
 import { useWorkspace } from './WorkspaceContext.tsx';
+
+function tierBadge(tier: 'ENV' | 'WS' | 'OVERRIDE' | undefined): React.ReactNode {
+  if (!tier) return <span className="w-7 shrink-0" />;
+  const cls = tier === 'ENV'
+    ? 'bg-secondary/10 border border-secondary/25 text-secondary/75'
+    : tier === 'WS'
+    ? 'bg-primary/12 border border-primary/30 text-primary/85'
+    : 'bg-tertiary/35 border border-tertiary/60 text-tertiary';
+  return <span className={`text-xs w-7 text-center py-px rounded font-bold shrink-0 ${cls}`}>{tier === 'OVERRIDE' ? 'OVR' : tier}</span>;
+}
 
 interface ExecutionContextProps {
   workspace: Workspace;
@@ -88,6 +98,10 @@ export function ExecutionContext({
   const [editingVarValue, setEditingVarValue] = useState('');
   const [editingHeaderKey, setEditingHeaderKey] = useState<string | null>(null);
   const [editingHeaderValue, setEditingHeaderValue] = useState('');
+
+  const clearSaveTimer = () => {
+    if (saveUndoTimerRef.current) { clearTimeout(saveUndoTimerRef.current); saveUndoTimerRef.current = null; }
+  };
 
   const [peekBarNode, setPeekBarNode] = useState<HTMLDivElement | null>(null);
   const peekBarRef = useCallback((node: HTMLDivElement | null) => setPeekBarNode(node), []);
@@ -188,7 +202,7 @@ export function ExecutionContext({
 
     setSaveUndoActive(true);
     setSaveStripDismissed(false);
-    if (saveUndoTimerRef.current) clearTimeout(saveUndoTimerRef.current);
+    clearSaveTimer();
     saveUndoTimerRef.current = setTimeout(() => {
       setSaveUndoActive(false);
       setSaveStripDismissed(true);
@@ -198,13 +212,13 @@ export function ExecutionContext({
   };
 
   const handleUndoSave = () => {
-    if (saveUndoTimerRef.current) { clearTimeout(saveUndoTimerRef.current); saveUndoTimerRef.current = null; }
+    clearSaveTimer();
     setSaveUndoActive(false);
     if (prePromoteSnapshotRef.current) onUpdateWorkspace(prePromoteSnapshotRef.current);
   };
 
   const handleDismissStrip = () => {
-    if (saveUndoTimerRef.current) { clearTimeout(saveUndoTimerRef.current); saveUndoTimerRef.current = null; }
+    clearSaveTimer();
     setSaveUndoActive(false);
     setSaveStripDismissed(true);
     setVarOverrides(null);
@@ -229,10 +243,10 @@ export function ExecutionContext({
     setQuickAddKey(''); setQuickAddValue(''); setQuickAddOpen(null);
   }, [quickAddKey, quickAddValue, quickAddOpen, quickAddTier, workspace, environment, onUpdateEnvironment, onUpdateWorkspace]);
 
-  const commitVarEdit = (key: string) => {
+  const commitVarEdit = useCallback((key: string) => {
     promoteVar(key, editingVarValue);
     setEditingVarKey(null);
-  };
+  }, [editingVarValue, promoteVar]);
 
   const commitHeaderEdit = useCallback((key: string) => {
     promoteHeader(key, editingHeaderValue);
@@ -398,7 +412,7 @@ export function ExecutionContext({
                                >
                                  <Pencil size={12} />
                                </button>
-                               {(() => { const t = editingVariablesTier.get(v.key); if (!t) return <span className="w-7 shrink-0" />; const c = t === 'ENV' ? 'bg-secondary/10 border border-secondary/25 text-secondary/75' : t === 'WS' ? 'bg-primary/12 border border-primary/30 text-primary/85' : 'bg-tertiary/35 border border-tertiary/60 text-tertiary'; return <span className={`text-xs w-7 text-center py-px rounded font-bold shrink-0 ${c}`}>{t === 'OVERRIDE' ? 'OVR' : t}</span>; })()}
+                               {tierBadge(editingVariablesTier.get(v.key))}
                              </div>
                            )}
                          </div>
@@ -523,7 +537,7 @@ export function ExecutionContext({
                                >
                                  <Pencil size={12} />
                                </button>
-                               {(() => { const t = editingHeadersTier.get(h.key); if (!t) return <span className="w-7 shrink-0" />; const c = t === 'ENV' ? 'bg-secondary/10 border border-secondary/25 text-secondary/75' : t === 'WS' ? 'bg-primary/12 border border-primary/30 text-primary/85' : 'bg-tertiary/35 border border-tertiary/60 text-tertiary'; return <span className={`text-xs w-7 text-center py-px rounded font-bold shrink-0 ${c}`}>{t === 'OVERRIDE' ? 'OVR' : t}</span>; })()}
+                               {tierBadge(editingHeadersTier.get(h.key))}
                              </div>
                            )}
                          </div>

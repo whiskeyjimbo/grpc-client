@@ -9,3 +9,4 @@ export { EmptyState } from './EmptyState';
 export { SegmentedControl } from './SegmentedControl';
 export { SearchInput, ChipTooltip, HighlightedInput, DynamicField } from './RequestPrimitives';
 export { JsonValue } from './JsonValue';
+export { DebouncedNumericInput } from './DebouncedNumericInput';

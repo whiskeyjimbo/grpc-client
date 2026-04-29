@@ -4,7 +4,7 @@
  */
 
 import React, { createContext, useContext, useState, useCallback, useMemo, useRef } from 'react';
-import type { GrpcMethod, HistoryItem, EnvVariable, MetadataHeader, Workspace, Environment } from '../../../types.ts';
+import type { GrpcMethod, EnvVariable, MetadataHeader } from '../../../types.ts';
 import { sanitizeRequestDataForFields } from '../../../lib/utils.ts';
 
 interface WorkspaceContextType {

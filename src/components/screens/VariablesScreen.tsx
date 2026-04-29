@@ -7,10 +7,10 @@ import React, { useState, useMemo, memo, useCallback, ChangeEvent, useRef, type 
 import {
   Trash2, Plus, Pencil, Check, X, Settings as SettingsIcon, AlertCircle, Eye, EyeOff, Tag, Layers, Globe, Braces, Hash, HelpCircle, Search, Download, Upload, ArrowLeftRight, Info, ChevronRight, Copy, ChevronDown
 } from 'lucide-react';
-import type { Workspace, Environment, EnvVariable } from '../types.ts';
-import { createEntityID, maskValue, isSensitiveKey } from '../utils.ts';
-import { PanelHeader, EmptyState, ContextBadge, SearchInput, SegmentedControl, FilterChipGroup } from './index.ts';
-import { ConfirmDialog } from './dialogs.tsx';
+import type { Workspace, Environment, EnvVariable } from '../../types.ts';
+import { createEntityID, maskValue, isSensitiveKey } from '../../lib/utils.ts';
+import { PanelHeader, EmptyState, ContextBadge, SearchInput, SegmentedControl, FilterChipGroup } from '../ui/index.ts';
+import { ConfirmDialog } from '../Dialogs.tsx';
 import { motion, AnimatePresence } from 'motion/react';
 import { createPortal } from 'react-dom';
 

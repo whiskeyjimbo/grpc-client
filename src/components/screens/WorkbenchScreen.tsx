@@ -8,14 +8,14 @@ import { motion } from 'motion/react';
 import {
   Layers, Search, Terminal as TerminalIcon
 } from 'lucide-react';
-import type { Workspace, Environment, GrpcService, GrpcMethod, EnvVariable, HistoryItem, ViewType, MetadataHeader } from '../types.ts';
-import { createEntityID, sanitizeRequestDataForFields, getErrorMessage, maskValue } from '../utils.ts';
-import { WorkbenchSidebar } from './WorkbenchSidebar.tsx';
-import { executeRequest } from '../api.ts';
-import { WorkspaceProvider, useWorkspace } from './workspace/WorkspaceContext.tsx';
-import { ExecutionContext } from './workspace/ExecutionContext.tsx';
-import { RequestEditor } from './workspace/RequestEditor.tsx';
-import { WorkbenchResponsePanel } from './WorkbenchResponsePanel.tsx';
+import type { Workspace, Environment, GrpcService, GrpcMethod, EnvVariable, HistoryItem, ViewType, MetadataHeader } from '../../types.ts';
+import { createEntityID, sanitizeRequestDataForFields, getErrorMessage, maskValue } from '../../lib/utils.ts';
+import { WorkbenchSidebar } from './workbench/WorkbenchSidebar.tsx';
+import { executeRequest } from '../../api/index.ts';
+import { WorkspaceProvider, useWorkspace } from './workbench/WorkspaceContext.tsx';
+import { ExecutionContext } from './workbench/ExecutionContext.tsx';
+import { RequestEditor } from './workbench/RequestEditor.tsx';
+import { WorkbenchResponsePanel } from './workbench/WorkbenchResponsePanel.tsx';
 
 export function WorkbenchScreen(props: {
   initialRequest: HistoryItem | null,

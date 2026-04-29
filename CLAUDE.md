@@ -54,7 +54,7 @@ docker build -t grpc-client . && docker run --rm -p 8080:80 grpc-client  # front
 
 ### Backend (`backend/`)
 
-- **`cmd/server/main.go`** — wires together store, executor, definitions service, and optional sctest runner; starts HTTP server.
+- **`cmd/server/main.go`** — wires together store, executor, and definitions service; starts HTTP server.
 - **`internal/api/router.go`** — all REST endpoints under `/api/*`; uses standard `net/http` mux with Go 1.22 pattern matching.
 - **`internal/store/`** — SQLite persistence via `modernc.org/sqlite`; WAL mode enabled by default. Stores workspaces, environments, and request history as JSON blobs.
 - **`internal/execute/`** — invokes gRPC methods using `grpcurl`/`jhump/protoreflect`.

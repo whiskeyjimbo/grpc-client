@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Environment, GrpcMethod, GrpcService, HistoryItem, Workspace } from './types';
-import { isDemoMode } from './demo-utils';
-import * as mockApi from './api.mock';
+import { Environment, GrpcMethod, GrpcService, HistoryItem, Workspace } from '../types';
+import { isDemoMode } from '../lib/demoUtils';
+import * as mockApi from './mock';
 
-export { isDemoMode, isForcedDemoMode, setDemoMode } from './demo-utils';
+export { isDemoMode, isForcedDemoMode, setDemoMode } from '../lib/demoUtils';
 
 export interface BootstrapResponse {
   workspaces: Workspace[];

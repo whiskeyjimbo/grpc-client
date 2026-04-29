@@ -6,10 +6,9 @@
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { motion, AnimatePresence, animate } from 'motion/react';
 import { Copy, Maximize2, Minimize2, Check, RefreshCw, X, Tag, Terminal as TerminalIcon, Search } from 'lucide-react';
-import type { GrpcMethod } from '../types.ts';
-import { MonoKeyValue } from './index.ts';
-import { JsonValue } from './JsonValue.tsx';
-import { GRPC_STATUS_DESCRIPTIONS, getLatencyColor } from '../utils.ts';
+import type { GrpcMethod } from '../../../types.ts';
+import { MonoKeyValue, JsonValue } from '../../ui/index.ts';
+import { GRPC_STATUS_DESCRIPTIONS, getLatencyColor } from '../../../lib/utils.ts';
 
 function ExecutionTimer({ isExecuting }: { isExecuting: boolean }) {
   const [elapsedMs, setElapsedMs] = useState(0);

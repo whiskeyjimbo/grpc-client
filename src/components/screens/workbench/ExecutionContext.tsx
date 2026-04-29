@@ -10,10 +10,9 @@ import {
   ArrowDownToLine, Check, X, Layers, Globe, Play, Lock, SaveAll, Undo2, History as HistoryIcon,
   ChevronRight
 } from 'lucide-react';
-import type { Workspace, Environment, EnvVariable, MetadataHeader, HistoryItem } from '../../types.ts';
-import { createEntityID, maskValue, isSensitiveKey } from '../../utils.ts';
-import { ContextBadge } from '../ContextBadge';
-import { ChipTooltip } from '../RequestPrimitives.tsx';
+import type { Workspace, Environment, EnvVariable, MetadataHeader, HistoryItem } from '../../../types.ts';
+import { createEntityID, maskValue, isSensitiveKey } from '../../../lib/utils.ts';
+import { ContextBadge, ChipTooltip } from '../../ui/index.ts';
 import { useWorkspace } from './WorkspaceContext.tsx';
 
 interface ExecutionContextProps {

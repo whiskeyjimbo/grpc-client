@@ -9,11 +9,10 @@ import {
   History as HistoryIcon, Trash2, Search, Play, Check, X,
   MoreVertical, Calendar, ArrowUpDown, ChevronDown, ChevronRight, Tag, Box, Network, Layers, Globe, RefreshCw, Braces, Hash
 } from 'lucide-react';
-import type { HistoryItem } from '../types.ts';
-import { getLatencyColor, GRPC_STATUS_DESCRIPTIONS, maskValue } from '../utils.ts';
-import { PanelHeader, CodeBlock, MonoKeyValue, EmptyState, FilterChipGroup, ContextBadge, SearchInput } from './index.ts';
-import { JsonValue } from './JsonValue.tsx';
-import { ConfirmDialog } from './dialogs.tsx';
+import type { HistoryItem } from '../../types.ts';
+import { getLatencyColor, GRPC_STATUS_DESCRIPTIONS, maskValue } from '../../lib/utils.ts';
+import { PanelHeader, CodeBlock, MonoKeyValue, EmptyState, FilterChipGroup, ContextBadge, SearchInput, JsonValue } from '../ui/index.ts';
+import { ConfirmDialog } from '../Dialogs.tsx';
 
 function formatRelativeTime(dateString: string) {
   const date = new Date(dateString);

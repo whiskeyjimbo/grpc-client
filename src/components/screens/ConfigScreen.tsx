@@ -3,9 +3,8 @@ import {
   Layers, Globe, Shield, Clock, AlertCircle, Trash2, Plus, Lock, Settings as SettingsIcon, ChevronRight,
   Palette, Zap, Activity, Info
 } from 'lucide-react';
-import type { Workspace, Environment, ConnectionPolicy, UIConfig } from '../types.ts';
-import { PanelHeader, SectionCard, Toggle, ContextBadge } from './index.ts';
-import { ChipTooltip } from './RequestPrimitives.tsx';
+import type { Workspace, Environment, ConnectionPolicy, UIConfig } from '../../types.ts';
+import { PanelHeader, SectionCard, Toggle, ContextBadge, ChipTooltip } from '../ui/index.ts';
 
 export function ConfigScreen({
   workspace,

@@ -8,10 +8,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Layers, Server, HelpCircle, BookOpen 
 } from 'lucide-react';
-import type { Workspace, Environment, GrpcMethod, EnvVariable, GrpcService } from '../../types.ts';
-import { createEntityID } from '../../utils.ts';
-import { PanelHeader } from '../PanelHeader';
-import { DynamicField } from '../RequestPrimitives.tsx';
+import type { Workspace, Environment, GrpcMethod, EnvVariable, GrpcService } from '../../../types.ts';
+import { createEntityID } from '../../../lib/utils.ts';
+import { PanelHeader, DynamicField } from '../../ui/index.ts';
 import { useWorkspace } from './WorkspaceContext.tsx';
 
 interface RequestEditorProps {

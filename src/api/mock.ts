@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Environment, GrpcMethod, GrpcService, HistoryItem, Workspace } from './types';
-import { BootstrapResponse, ExecuteResponse, DefinitionsResponse } from './api';
+import { Environment, GrpcMethod, GrpcService, HistoryItem, Workspace } from '../types';
+import { BootstrapResponse, ExecuteResponse, DefinitionsResponse } from './client';
 
 const SAMPLE_SERVICES: GrpcService[] = [
   {

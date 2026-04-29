@@ -6,8 +6,8 @@
 import React, { useState, type FC } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Search, X } from 'lucide-react';
-import type { EnvVariable, GrpcField } from '../types.ts';
-import { resolveVariables } from '../utils.ts';
+import type { EnvVariable, GrpcField } from '../../types.ts';
+import { resolveVariables } from '../../lib/utils.ts';
 
 // ---------------------------------------------------------------------------
 // SearchInput

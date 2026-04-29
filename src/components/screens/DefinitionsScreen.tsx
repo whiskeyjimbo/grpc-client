@@ -7,11 +7,11 @@ import { useState, useRef, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { CloudUpload, Wifi, Lock, Network, Server, Trash2, Layers, Globe, Search, Check, Zap, BookOpen, Play } from 'lucide-react';
-import type { Workspace, Environment, GrpcService } from '../types.ts';
-import { getErrorMessage } from '../utils.ts';
-import { importProtoFiles, reflectDefinitions, isForcedDemoMode, setDemoMode, isDemoMode } from '../api.ts';
-import { Toggle, ContextBadge, PanelHeader, SectionCard, EmptyState, SearchInput } from './index.ts';
-import { ConfirmDialog } from './dialogs.tsx';
+import type { Workspace, Environment, GrpcService } from '../../types.ts';
+import { getErrorMessage } from '../../lib/utils.ts';
+import { importProtoFiles, reflectDefinitions, isForcedDemoMode, setDemoMode, isDemoMode } from '../../api/index.ts';
+import { Toggle, ContextBadge, PanelHeader, SectionCard, EmptyState, SearchInput } from '../ui/index.ts';
+import { ConfirmDialog } from '../Dialogs.tsx';
 
 export function DefinitionsScreen({
   workspace,

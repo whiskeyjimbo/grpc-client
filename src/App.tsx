@@ -3,62 +3,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useState, useMemo, Fragment, useRef, useCallback, type ChangeEvent, type DragEvent } from 'react';
-import { createPortal } from 'react-dom';
-import {
-  Search,
-  Play,
-  Globe,
-  Network,
-  Layers,
-  Settings as SettingsIcon,
-  History as HistoryIcon,
-  ChevronRight,
-  ChevronLeft,
-  ChevronDown,
-  ChevronUp,
-  X,
-  Plus,
-  Pencil,
-  Terminal as TerminalIcon,
-  BookOpen,
-  Wifi,
-  CloudUpload,
-  Server,
-  Lock,
-  Cpu,
-  Braces,
-  Copy,
-  Check,
-  RefreshCw,
-  Trash2,
-  Hash,
-  Tag,
-  Maximize2,
-  Minimize2,
-  ArrowDownToLine,
-  SaveAll,
-  Undo2,
-  HelpCircle,
-  MoreHorizontal,
-} from 'lucide-react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import { Play, RefreshCw, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ViewType, GrpcService, GrpcMethod, GrpcField, HistoryItem, EnvVariable, MetadataHeader, Workspace, Environment, ConnectionPolicy } from './types.ts';
-import { MOCK_HISTORY, MOCK_WORKSPACES, MOCK_ENVIRONMENTS } from './constants.ts';
-import { appendHistory, deleteEnvironment, deleteHistory, deleteHistoryBulk, deleteWorkspace, executeRequest, fetchBootstrap, importProtoFiles, reflectDefinitions, upsertEnvironment, upsertWorkspace, isDemoMode, setDemoMode, isForcedDemoMode } from './api.ts';
-import { Toggle, ContextBadge, FilterChipGroup, MonoKeyValue, PanelHeader, CodeBlock, SectionCard, EmptyState, SearchInput } from './components/index.ts';
-import { DefinitionsScreen } from './components/DefinitionsScreen.tsx';
-import { HistoryScreen } from './components/HistoryScreen.tsx';
-import { VariablesScreen } from './components/VariablesScreen.tsx';
-import { ConfigScreen } from './components/ConfigScreen.tsx';
-import { WorkbenchScreen } from './components/WorkbenchScreen.tsx';
-import { JsonValue } from './components/JsonValue.tsx';
-import { ChipTooltip, HighlightedInput, DynamicField } from './components/RequestPrimitives.tsx';
-import { ConfirmDialog, Modal, HelpPanel } from './components/dialogs.tsx';
-import { createEntityID, maskValue, isSensitiveKey, resolveVariables, sanitizeRequestDataForFields, getErrorMessage, getLatencyColor, GRPC_STATUS_DESCRIPTIONS, type Toast } from './utils.ts';
-import { Palette, PALETTES } from './themes.ts';
-
-// --- Theme Palettes ---
+import { ViewType, GrpcService, HistoryItem, Workspace, Environment } from './types.ts';
+import { MOCK_HISTORY, MOCK_WORKSPACES, MOCK_ENVIRONMENTS } from './lib/constants.ts';
+import { appendHistory, deleteEnvironment, deleteHistory, deleteHistoryBulk, deleteWorkspace, executeRequest, fetchBootstrap, importProtoFiles, reflectDefinitions, upsertEnvironment, upsertWorkspace, isDemoMode, setDemoMode, isForcedDemoMode } from './api/index.ts';
+import { DefinitionsScreen } from './components/screens/DefinitionsScreen.tsx';
+import { HistoryScreen } from './components/screens/HistoryScreen.tsx';
+import { VariablesScreen } from './components/screens/VariablesScreen.tsx';
+import { ConfigScreen } from './components/screens/ConfigScreen.tsx';
+import { WorkbenchScreen } from './components/screens/WorkbenchScreen.tsx';
+import { ConfirmDialog, Modal, HelpPanel } from './components/Dialogs.tsx';
+import { Header, ContextBar, Sidebar, LandscapeRail, BottomNav } from './components/layout/index.ts';
+import { createEntityID, getErrorMessage, type Toast } from './lib/utils.ts';
+import { PALETTES } from './lib/themes.ts';
 
 // Apply saved theme immediately to avoid flash on load
 {
@@ -68,746 +27,6 @@ import { Palette, PALETTES } from './themes.ts';
   Object.entries(savedPalette.vars).forEach(([k, v]) => root.style.setProperty(k, v));
   root.classList.add(`theme-${savedId}`);
 }
-
-// --- Components ---
-
-function Tooltip({ children, content, side = 'top' }: { children: React.ReactNode; content: string; side?: 'top' | 'right' | 'bottom' | 'left' }) {
-  const [open, setOpen] = useState(false);
-  const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
-  const [nudge, setNudge] = useState(0);
-  const triggerRef = useRef<HTMLDivElement>(null);
-  const tooltipRef = useRef<HTMLDivElement>(null);
-
-  const updatePos = () => {
-    if (!triggerRef.current) return;
-    setTriggerRect(triggerRef.current.getBoundingClientRect());
-    setNudge(0);
-  };
-
-  React.useLayoutEffect(() => {
-    if (open && triggerRect && tooltipRef.current) {
-      const rect = tooltipRef.current.getBoundingClientRect();
-      const margin = 12;
-      if (rect.left < margin) {
-        setNudge(margin - rect.left);
-      } else if (rect.right > window.innerWidth - margin) {
-        setNudge(window.innerWidth - margin - rect.right);
-      }
-    }
-  }, [open, triggerRect]);
-
-  return (
-    <div
-      ref={triggerRef}
-      onMouseEnter={() => { updatePos(); setOpen(true); }}
-      onMouseLeave={() => setOpen(false)}
-      onFocus={() => { updatePos(); setOpen(true); }}
-      onBlur={() => setOpen(false)}
-      className="inline-flex"
-    >
-      {children}
-      {open && triggerRect && createPortal(
-        <div
-          ref={tooltipRef}
-          className="fixed z-[100] px-3 py-2 bg-surface-container-highest border border-outline-variant/30 rounded-lg shadow-2xl text-[11px] text-on-surface-variant leading-relaxed max-w-[240px] pointer-events-none"
-          style={{
-            left: triggerRect.left + triggerRect.width / 2,
-            top: side === 'top' ? triggerRect.top : triggerRect.bottom,
-            transform: `translate(-50%, ${side === 'top' ? '-100%' : '0'}) 
-                        translateY(${side === 'top' ? '-8px' : '8px'}) 
-                        translateX(${nudge}px)`
-          }}
-        >
-          {content}
-        </div>,
-        document.body
-      )}
-    </div>
-  );
-}
-
-function Header({
-  onNavigate,
-  searchQuery,
-  onSearchQueryChange,
-  isMockMode,
-  onToggleSidebar,
-}: {
-  onNavigate: (v: ViewType) => void;
-  searchQuery: string;
-  onSearchQueryChange: (query: string) => void;
-  isMockMode: boolean;
-  onToggleSidebar?: () => void;
-}) {
-  const searchInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
-        event.preventDefault();
-        searchInputRef.current?.focus();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  return (
-    <header className="h-10 md:h-14 border-b border-outline-variant/30 bg-surface-container-low flex justify-between items-center px-3 md:px-4 sticky top-0 z-50">
-      <div className="flex items-center gap-3 md:gap-6">
-        {onToggleSidebar && (
-          <button
-            onClick={onToggleSidebar}
-            className="md:hidden p-1 rounded hover:bg-surface-container transition-colors text-outline-variant hover:text-on-surface outline-none"
-            aria-label="Toggle navigation menu"
-          >
-            <div className="flex flex-col gap-1 w-4">
-              <div className="h-0.5 w-full bg-current rounded-full" />
-              <div className="h-0.5 w-full bg-current rounded-full" />
-              <div className="h-0.5 w-full bg-current rounded-full" />
-            </div>
-          </button>
-        )}
-        <button
-          onClick={() => onNavigate('definitions')}
-          className="flex items-center gap-2 group/logo outline-none rounded p-0.5"
-          aria-label="Go to Definitions"
-        >
-          <div className="w-6 h-6 bg-primary rounded flex items-center justify-center group-hover/logo:scale-105 transition-transform">
-            <TerminalIcon size={13} className="text-on-primary" />
-          </div>
-          <span className="font-display font-bold tracking-tight text-lg group-hover/logo:text-primary transition-colors hidden sm:block">gRPC Client</span>
-          <span className="font-display font-bold tracking-tight text-base group-hover/logo:text-primary transition-colors sm:hidden">gRPC</span>
-        </button>
-        
-        <SearchInput
-          inputRef={searchInputRef}
-          placeholder="Filter Workbench methods..."
-          value={searchQuery}
-          onChange={onSearchQueryChange}
-          onClear={() => onSearchQueryChange('')}
-          ariaLabel="Filter Workbench methods"
-          className="hidden md:block w-64"
-          rightElement={
-            <div className="flex gap-1 items-center px-1.5 shrink-0 pointer-events-none">
-              <kbd className="text-[10px] bg-outline-variant/15 px-1 rounded border border-outline-variant/30 text-outline/50 font-mono">⌘</kbd>
-              <kbd className="text-[10px] bg-outline-variant/15 px-1 rounded border border-outline-variant/30 text-outline/50 font-mono">K</kbd>
-            </div>
-          }
-        />
-      </div>
-      <div className="flex items-center gap-3">
-        {isMockMode && (
-          <div className="flex items-center gap-2 px-2 py-0.5 rounded bg-warning/10 border border-warning/20">
-            <div className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse" />
-            <span className="text-[10px] font-bold text-warning uppercase tracking-wider">Mock Mode</span>
-            <button 
-              onClick={() => { setDemoMode(false); window.location.reload(); }}
-              className="ml-1 hover:text-warning/80 transition-colors hide-in-demo"
-              title="Exit Demo Mode"
-            >
-              <X size={12} strokeWidth={3} />
-            </button>
-          </div>
-        )}
-        <div className="h-4 w-px bg-outline-variant/20 mx-1" />
-        <div className="flex items-center gap-2">
-          <div className={`w-1.5 h-1.5 rounded-full ${isMockMode ? 'bg-outline/20' : 'bg-success shadow-[0_0_8px_var(--color-success)]'}`} />
-          <span className="text-[10px] font-bold text-outline/50 uppercase tracking-wider">
-            {isForcedDemoMode() ? 'Demo Mode' : isMockMode ? 'Backend Offline' : 'Connected'}
-          </span>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-function CustomSelect({
-  value,
-  options,
-  onChange,
-  colorClass,
-  ariaLabel
-}: {
-  value: string;
-  options: { id: string; name: string }[];
-  onChange: (id: string) => void;
-  colorClass: string;
-  ariaLabel: string;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const selected = options.find(o => o.id === value) || options[0];
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handle = (e: MouseEvent) => {
-      if (!containerRef.current?.contains(e.target as Node)) setIsOpen(false);
-    };
-    document.addEventListener('mousedown', handle);
-    return () => document.removeEventListener('mousedown', handle);
-  }, [isOpen]);
-
-  return (
-    <div ref={containerRef} className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label={ariaLabel}
-        aria-expanded={isOpen}
-        className={`flex items-center gap-1.5 px-2 py-1 rounded hover:bg-surface-container transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary`}
-      >
-        <span className={`text-[11px] font-bold ${colorClass} truncate max-w-[140px]`}>{selected.name}</span>
-        <ChevronDown size={10} className={`${colorClass} opacity-50 shrink-0`} />
-      </button>
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 4, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 4, scale: 0.98 }}
-            transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute top-full left-0 mt-1 z-[100] bg-surface-container-highest border border-outline-variant/30 rounded-lg shadow-2xl py-1.5 min-w-[200px] max-h-[300px] overflow-y-auto custom-scrollbar"
-            role="listbox"
-          >
-            {options.map(opt => (
-              <button
-                key={opt.id}
-                role="option"
-                aria-selected={opt.id === value}
-                onClick={() => { onChange(opt.id); setIsOpen(false); }}
-                className={`w-full flex items-center justify-between px-4 py-2.5 text-[11px] font-semibold transition-colors text-left ${
-                  opt.id === value 
-                    ? `text-on-surface bg-primary/10` 
-                    : `text-on-surface-variant hover:bg-surface-container hover:text-on-surface`
-                }`}
-              >
-                <span className="truncate">{opt.name}</span>
-                {opt.id === value && <Check size={10} className={colorClass} />}
-              </button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function ContextBar({
-  activeWorkspace,
-  activeEnvironment,
-  workspaces,
-  environments,
-  onWorkspaceChange,
-  onEnvironmentChange,
-  onCreateWorkspace,
-  onDeleteWorkspace,
-  onCreateEnvironment,
-  onDeleteEnvironment,
-  canDeleteWorkspace,
-  canDeleteEnvironment,
-  onRenameWorkspace,
-  onRenameEnvironment,
-}: {
-  activeWorkspace: Workspace,
-  activeEnvironment: Environment,
-  workspaces: Workspace[],
-  environments: Environment[],
-  onWorkspaceChange: (id: string) => void,
-  onEnvironmentChange: (id: string) => void,
-  onCreateWorkspace: () => void,
-  onDeleteWorkspace: () => void,
-  onCreateEnvironment: () => void,
-  onDeleteEnvironment: () => void,
-  canDeleteWorkspace: boolean,
-  canDeleteEnvironment: boolean,
-  onRenameWorkspace: (id: string, name: string) => void,
-  onRenameEnvironment: (id: string, name: string) => void,
-}) {
-  const [renamingEntity, setRenamingEntity] = useState<'workspace' | 'environment' | null>(null);
-  const [renameValue, setRenameValue] = useState('');
-  const [overflowOpen, setOverflowOpen] = useState<'workspace' | 'environment' | null>(null);
-  const wsOverflowRef = useRef<HTMLDivElement>(null);
-  const envOverflowRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!overflowOpen) return;
-    const handle = (e: MouseEvent) => {
-      const ref = overflowOpen === 'workspace' ? wsOverflowRef : envOverflowRef;
-      if (!ref.current?.contains(e.target as Node)) setOverflowOpen(null);
-    };
-    document.addEventListener('mousedown', handle);
-    return () => document.removeEventListener('mousedown', handle);
-  }, [overflowOpen]);
-
-  const startRename = (entity: 'workspace' | 'environment') => {
-    setOverflowOpen(null);
-    setRenamingEntity(entity);
-    setRenameValue(entity === 'workspace' ? activeWorkspace.name : activeEnvironment.name);
-  };
-
-  const commitRename = () => {
-    const trimmed = renameValue.trim();
-    if (trimmed && renamingEntity === 'workspace') onRenameWorkspace(activeWorkspace.id, trimmed);
-    if (trimmed && renamingEntity === 'environment') onRenameEnvironment(activeEnvironment.id, trimmed);
-    setRenamingEntity(null);
-  };
-
-  const cancelRename = () => setRenamingEntity(null);
-
-  const EntityOverflow = ({
-    entity,
-    canDelete,
-    onDelete,
-    color,
-  }: {
-    entity: 'workspace' | 'environment';
-    canDelete: boolean;
-    onDelete: () => void;
-    color: string;
-  }) => {
-    const ref = entity === 'workspace' ? wsOverflowRef : envOverflowRef;
-    const isOpen = overflowOpen === entity;
-    return (
-      <div ref={ref} className="relative shrink-0">
-        <button
-          onClick={() => setOverflowOpen(isOpen ? null : entity)}
-          className="h-11 w-11 flex items-center justify-center rounded text-outline/40 hover:text-on-surface hover:bg-surface-container-high/50 transition-colors"
-          aria-label={`${entity} actions`}
-          aria-expanded={isOpen}
-          title={`${entity === 'workspace' ? 'Workspace' : 'Environment'} actions`}
-        >
-          <MoreHorizontal size={14} />
-        </button>
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -4, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -4, scale: 0.97 }}
-              transition={{ duration: 0.12, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute top-full left-0 mt-1.5 z-50 bg-surface-container-highest border border-outline-variant/30 rounded shadow-xl overflow-hidden min-w-[120px]"
-            >
-              <button
-                onClick={() => startRename(entity)}
-                className={`w-full flex items-center gap-2 px-3 py-2 text-[11px] font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors text-left`}
-              >
-                <Pencil size={11} className={color} />
-                Rename
-              </button>
-              <button
-                onClick={() => { setOverflowOpen(null); onDelete(); }}
-                disabled={!canDelete}
-                className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-semibold text-on-surface-variant hover:text-error hover:bg-error/5 transition-colors text-left disabled:opacity-30 disabled:cursor-not-allowed"
-                title={!canDelete ? `Cannot delete the last ${entity}` : undefined}
-              >
-                <Trash2 size={11} />
-                Delete
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    );
-  };
-
-  return (
-    <div className="min-h-[36px] md:min-h-[40px] py-1.5 md:py-0 border-b border-outline-variant/20 bg-background flex flex-wrap items-center px-3 md:px-4 gap-x-4 md:gap-x-10 gap-y-1 shrink-0">
-      <div className="group/ws flex items-center gap-1.5 min-w-0">
-        <Tooltip content="Active workspace. WS-tier variables override ENV defaults." side="bottom">
-          <span className="type-eyebrow text-outline/60 cursor-default leading-none hidden xs:inline">Workspace</span>
-          <Layers size={10} className="xs:hidden text-outline/50" />
-        </Tooltip>
-        {renamingEntity === 'workspace' ? (
-          <input
-            autoFocus
-            className="bg-surface-container border border-primary rounded px-2 py-1 text-[11px] font-bold text-primary outline-none w-32"
-            value={renameValue}
-            onChange={(e) => setRenameValue(e.target.value)}
-            onBlur={commitRename}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') { e.preventDefault(); commitRename(); }
-              if (e.key === 'Escape') { e.preventDefault(); cancelRename(); }
-            }}
-            aria-label="Rename workspace"
-          />
-        ) : (
-          <CustomSelect
-            value={activeWorkspace.id}
-            options={workspaces}
-            onChange={onWorkspaceChange}
-            colorClass="text-primary"
-            ariaLabel="Active workspace"
-          />
-        )}
-        <div className="flex items-center gap-0.5 opacity-0 group-hover/ws:opacity-100 group-focus-within/ws:opacity-100 transition-opacity duration-150 shrink-0">
-          <EntityOverflow entity="workspace" canDelete={canDeleteWorkspace} onDelete={onDeleteWorkspace} color="text-primary" />
-        </div>
-        <button onClick={onCreateWorkspace} className="h-11 w-11 flex items-center justify-center rounded text-primary/50 hover:text-primary hover:bg-primary/10 transition-colors shrink-0 outline-none" aria-label="New workspace" title="New workspace">
-          <Plus size={11} />
-        </button>
-      </div>
-
-      <div className="group/env flex items-center gap-1.5 min-w-0">
-        <Tooltip content="Active environment. ENV-tier variables are the shared baseline; WS and OVR tiers override them." side="bottom">
-          <span className="type-eyebrow text-outline/60 cursor-default leading-none hidden xs:inline">Environment</span>
-          <Tag size={10} className="xs:hidden text-outline/50" />
-        </Tooltip>
-        {renamingEntity === 'environment' ? (
-          <input
-            autoFocus
-            className="bg-surface-container border border-secondary rounded px-2 py-1 text-[11px] font-bold text-secondary outline-none w-32"
-            value={renameValue}
-            onChange={(e) => setRenameValue(e.target.value)}
-            onBlur={commitRename}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') { e.preventDefault(); commitRename(); }
-              if (e.key === 'Escape') { e.preventDefault(); cancelRename(); }
-            }}
-            aria-label="Rename environment"
-          />
-        ) : (
-          <CustomSelect
-            value={activeEnvironment.id}
-            options={environments}
-            onChange={onEnvironmentChange}
-            colorClass="text-secondary"
-            ariaLabel="Active environment"
-          />
-        )}
-        <div className="flex items-center gap-0.5 opacity-0 group-hover/env:opacity-100 group-focus-within/env:opacity-100 transition-opacity duration-150 shrink-0">
-          <EntityOverflow entity="environment" canDelete={canDeleteEnvironment} onDelete={onDeleteEnvironment} color="text-secondary" />
-        </div>
-        <button onClick={onCreateEnvironment} className="h-11 w-11 flex items-center justify-center rounded text-secondary/50 hover:text-secondary hover:bg-secondary/10 transition-colors shrink-0 outline-none" aria-label="New environment" title="New environment">
-          <Plus size={11} />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function BottomNav({ activeView, onNavigate }: { activeView: ViewType; onNavigate: (v: ViewType) => void }) {
-  const navItems = [
-    { id: 'definitions', label: 'Defs', icon: BookOpen },
-    { id: 'workspace', label: 'Work', icon: Layers },
-    { id: 'history', label: 'Hist', icon: HistoryIcon },
-    { id: 'environments', label: 'Vars', icon: Tag },
-    { id: 'config', label: 'Conf', icon: SettingsIcon },
-  ];
-
-  return (
-    <nav className="md:hidden landscape:hidden h-16 border-t border-outline-variant/30 bg-surface-container-low flex items-center justify-around px-2 safe-area-bottom shrink-0 z-50">
-      {navItems.map((item) => {
-        const isActive = activeView === item.id;
-        return (
-          <button
-            key={item.id}
-            onClick={() => onNavigate(item.id as ViewType)}
-            className={`flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors outline-none ${
-              isActive ? 'text-primary' : 'text-outline hover:text-on-surface'
-            }`}
-          >
-            <div className={`p-1.5 rounded-full transition-colors ${isActive ? 'bg-primary/10' : ''}`}>
-              <item.icon size={20} />
-            </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider">{item.label}</span>
-          </button>
-        );
-      })}
-    </nav>
-  );
-}
-
-function LandscapeRail({ activeView, onNavigate }: { activeView: ViewType; onNavigate: (v: ViewType) => void }) {
-  const navItems = [
-    { id: 'definitions', icon: BookOpen },
-    { id: 'workspace', icon: Layers },
-    { id: 'history', icon: HistoryIcon },
-    { id: 'environments', icon: Tag },
-    { id: 'config', icon: SettingsIcon },
-  ];
-
-  return (
-    <nav className="hidden landscape:flex md:landscape:hidden w-12 border-r border-outline-variant/30 bg-surface-container-low flex-col items-center py-2 gap-2 safe-area-left shrink-0 z-50">
-      {navItems.map((item) => {
-        const isActive = activeView === item.id;
-        return (
-          <button
-            key={item.id}
-            onClick={() => onNavigate(item.id as ViewType)}
-            className={`p-2.5 rounded-xl transition-colors outline-none ${
-              isActive ? 'bg-primary/10 text-primary' : 'text-outline hover:text-on-surface hover:bg-surface-container-high'
-            }`}
-          >
-            <item.icon size={18} />
-          </button>
-        );
-      })}
-    </nav>
-  );
-}
-
-function Sidebar({
-  activeView,
-  onNavigate,
-  isCollapsed,
-  onToggleCollapse,
-  activeThemeId,
-  onThemeChange,
-  onOpenHelp,
-}: {
-  activeView: ViewType,
-  onNavigate: (v: ViewType) => void,
-  isCollapsed: boolean,
-  onToggleCollapse: () => void,
-  activeThemeId: string,
-  onThemeChange: (id: string) => void,
-  onOpenHelp: () => void,
-}) {
-  const navItems = [
-    { id: 'definitions', label: 'Definitions', icon: BookOpen },
-    { id: 'workspace', label: 'Workbench', icon: Layers },
-    { id: 'history', label: 'History', icon: HistoryIcon },
-    { id: 'environments', label: 'Variables', icon: Tag },
-    { id: 'config', label: 'Config', icon: SettingsIcon },
-  ];
-
-  return (
-    <motion.nav 
-      animate={{ 
-        width: window.innerWidth < 768 
-          ? isCollapsed ? 0 : 200 
-          : isCollapsed ? 64 : 200,
-        x: window.innerWidth < 768 && isCollapsed ? -200 : 0
-      }}
-      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className={`hidden md:flex border-r border-outline-variant/30 bg-surface-container-lowest flex-col pt-6 shrink-0 h-full overflow-x-hidden overflow-y-auto custom-scrollbar relative z-[60]`}
-    >
-      <ul className="flex-1 space-y-1">
-        {navItems.map((item) => (
-          <li key={item.id} className="relative group/nav">
-            <button 
-              onClick={() => onNavigate(item.id as ViewType)}
-              className={`w-full flex items-center justify-start px-[23px] py-2 transition-colors group relative outline-none ${
-                activeView === item.id 
-                  ? 'text-primary' 
-                  : 'text-outline hover:text-on-surface hover:bg-surface-container-high/50'
-              }`}
-            >
-               {activeView === item.id && (
-                 <>
-                    <motion.div
-                      layoutId="active-nav-bg"
-                      className="absolute inset-y-0 inset-x-2 bg-primary/10 rounded-sm"
-                      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                    />
-                    <motion.div
-                      layoutId="active-nav-dot"
-                      className="absolute w-1.5 h-1.5 bg-primary shrink-0 top-1/2"
-                      style={{ rotate: 45, y: '-50%' }}
-                      animate={{ right: isCollapsed ? 6 : 12 }}
-                      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                    />
-                 </>
-               )}
-               <div className="relative shrink-0">
-                 <item.icon size={18} />
-               </div>
-                <AnimatePresence>
-                  {!isCollapsed && (
-                    <motion.span 
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -8 }}
-                      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                      className="font-sans text-xs font-semibold tracking-wide uppercase ml-3 whitespace-nowrap overflow-hidden"
-                    >
-                       {item.label}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-               
-               {isCollapsed && (
-                  <div className="absolute left-full ml-2 px-2 py-1.5 bg-surface-container-highest border border-outline-variant/30 rounded type-label text-on-surface pointer-events-none opacity-0 group-hover/nav:opacity-100 group-focus-within/nav:opacity-100 transition-opacity z-50 whitespace-nowrap shadow-xl">
-                    {item.label}
-                  </div>
-               )}
-            </button>
-          </li>
-        ))}
-      </ul>
-
-      <div className="mt-auto border-t border-outline-variant/10 p-2 flex flex-col gap-0.5">
-        <ThemeSwitcher activeThemeId={activeThemeId} onThemeChange={onThemeChange} isCollapsed={isCollapsed} />
-        <div className="relative group/help">
-          <button
-            onClick={onOpenHelp}
-            className="w-full h-[34px] flex items-center justify-start px-[15px] text-outline hover:text-on-surface hover:bg-surface-container-high/50 rounded transition-colors"
-            aria-label="Open reference panel"
-          >
-            <div className="shrink-0 flex items-center justify-center">
-              <HelpCircle size={18} />
-            </div>
-            <AnimatePresence>
-              {!isCollapsed && (
-                <motion.div
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -8 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex items-center flex-1 ml-2"
-                >
-                  <span className="font-sans text-xs font-semibold tracking-wide uppercase whitespace-nowrap text-outline">
-                    Help
-                  </span>
-                  <kbd className="ml-auto text-[11px] bg-outline-variant/15 px-1.5 py-px rounded border border-outline-variant/30 text-outline/50 font-mono">?</kbd>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </button>
-          {isCollapsed && (
-            <div className="absolute left-full ml-2 px-2 py-1.5 bg-surface-container-highest border border-outline-variant/30 rounded type-label text-on-surface pointer-events-none opacity-0 group-hover/help:opacity-100 group-focus-within/help:opacity-100 transition-opacity z-50 whitespace-nowrap shadow-xl">
-              Help <kbd className="text-[11px] font-mono ml-1 opacity-60">?</kbd>
-            </div>
-          )}
-        </div>
-        <button
-          onClick={onToggleCollapse}
-          className="w-full h-[34px] flex items-center justify-center p-2 text-outline hover:text-on-surface hover:bg-surface-container-high/50 rounded transition-colors"
-          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-        </button>
-      </div>
-    </motion.nav>
-  );
-}
-
-function ThemeSwitcher({ activeThemeId, onThemeChange, isCollapsed }: {
-  activeThemeId: string;
-  onThemeChange: (id: string) => void;
-  isCollapsed: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const [panelPos, setPanelPos] = useState({ bottom: 0, left: 0 });
-  const panelRef = useRef<HTMLDivElement>(null);
-  const btnRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handle = (e: MouseEvent) => {
-      const target = e.target as Node;
-      const outsidePanel = !panelRef.current?.contains(target);
-      const outsideBtn = !btnRef.current?.contains(target);
-      if (outsidePanel && outsideBtn) setOpen(false);
-    };
-    document.addEventListener('mousedown', handle);
-    return () => document.removeEventListener('mousedown', handle);
-  }, [open]);
-
-  const handleToggle = () => {
-    if (!open && btnRef.current) {
-      const rect = btnRef.current.getBoundingClientRect();
-      setPanelPos({ bottom: window.innerHeight - rect.bottom, left: rect.right + 12 });
-    }
-    setOpen(o => !o);
-  };
-
-  const active = PALETTES.find(p => p.id === activeThemeId) ?? PALETTES[0];
-
-  const paletteList = (
-    <>
-      <p className="type-eyebrow text-outline/60 mb-2.5">Theme</p>
-      <div className="flex flex-col gap-0.5">
-        {PALETTES.map(p => {
-          const isActive = p.id === activeThemeId;
-          return (
-            <button
-              key={p.id}
-              onClick={() => { onThemeChange(p.id); setOpen(false); }}
-              title={p.name}
-              className={`flex flex-row items-center gap-2 px-2 py-1.5 w-full rounded-md transition-colors ${isActive ? 'bg-surface-container' : 'hover:bg-surface-container'}`}
-            >
-              <span
-                className="w-4 h-4 rounded-full shrink-0 transition-all"
-                style={{
-                  backgroundColor: p.swatch,
-                  boxShadow: isActive
-                    ? `0 0 0 2px var(--color-surface-container-highest), 0 0 0 3.5px ${p.swatch}`
-                    : 'none',
-                }}
-              />
-              <span className="type-label text-on-surface-variant/70 whitespace-nowrap">{p.name}</span>
-            </button>
-          );
-        })}
-      </div>
-    </>
-  );
-
-  const portalPanel = (
-    <motion.div
-      key="theme-panel-portal"
-      ref={panelRef}
-      initial={{ opacity: 0, x: -6, scale: 0.97 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: -6, scale: 0.97 }}
-      transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
-      style={{ position: 'fixed', bottom: panelPos.bottom, left: panelPos.left, zIndex: 9999 }}
-      className="w-40 bg-surface-container-highest border border-outline-variant/30 rounded-lg p-3 shadow-2xl"
-    >
-      {paletteList}
-    </motion.div>
-  );
-
-  return (
-    <div className="relative">
-      {createPortal(
-        <AnimatePresence>{open && portalPanel}</AnimatePresence>,
-        document.body
-      )}
-      <button
-        ref={btnRef}
-        onClick={handleToggle}
-        className="w-full h-[34px] flex items-center justify-start px-[15px] text-outline hover:text-on-surface hover:bg-surface-container-high/50 rounded transition-colors"
-        aria-label={`Color theme: ${active.name}`}
-        title={isCollapsed ? `Theme: ${active.name}` : undefined}
-      >
-        <div className="w-[18px] h-[18px] rounded-full shrink-0 flex items-center justify-center overflow-hidden" style={{ backgroundColor: active.swatch }} />
-        <AnimatePresence>
-          {!isCollapsed && (
-            <motion.div
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -8 }}
-              transition={{ duration: 0.2 }}
-              className="flex items-center flex-1 ml-2"
-            >
-              <span className="font-sans text-xs font-semibold tracking-wide uppercase whitespace-nowrap text-on-surface-variant">Theme</span>
-              <span className="ml-auto inline-flex items-center justify-center bg-outline-variant/15 px-1.5 py-px rounded border border-outline-variant/30">
-                <motion.span
-                  animate={{ rotate: open ? -90 : 0 }}
-                  transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                  className="inline-flex items-center text-outline/50"
-                >
-                  <ChevronRight size={10} />
-                </motion.span>
-              </span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </button>
-    </div>
-  );
-}
-
-
-
-
-
-
-
 
 export default function App() {
   const [activeView, setActiveView] = useState<ViewType>('workspace');
@@ -856,8 +75,7 @@ export default function App() {
     const palette = PALETTES.find(p => p.id === effectiveThemeId) ?? PALETTES[0];
     const root = document.documentElement;
     Object.entries(palette.vars).forEach(([k, v]) => root.style.setProperty(k, v));
-    
-    // Toggle theme classes
+
     PALETTES.forEach(p => root.classList.remove(`theme-${p.id}`));
     root.classList.add(`theme-${effectiveThemeId}`);
   }, [effectiveThemeId]);
@@ -873,7 +91,6 @@ export default function App() {
     window.addEventListener('keydown', handleHelpKey);
     return () => window.removeEventListener('keydown', handleHelpKey);
   }, []);
-
 
   const showToast = (tone: Toast['tone'], message: string, onUndo?: () => void) => {
     setToast({
@@ -902,7 +119,7 @@ export default function App() {
     try {
       setBootstrapError(null);
       const bootstrap = await fetchBootstrap();
-      
+
       if (bootstrap.workspaces.length > 0) {
         setWorkspaces(bootstrap.workspaces);
         setActiveWorkspaceId((current) => (
@@ -944,7 +161,7 @@ export default function App() {
       variables: [],
       headers: []
     };
-    
+
     setEnvironments(prev => [...prev, newEnv]);
     setActiveEnvironmentId(newEnv.id);
     setIsEnvironmentModalOpen(false);
@@ -1103,10 +320,10 @@ export default function App() {
   };
 
   useEffect(() => {
-    // Suppress ResizeObserver loop errors which are benign but common with layout animations
+    // Suppress benign ResizeObserver loop errors from layout animations
     const errorHandler = (e: any) => {
-      const isResizeObserverError = 
-        (e?.message?.includes('ResizeObserver loop completion') || 
+      const isResizeObserverError =
+        (e?.message?.includes('ResizeObserver loop completion') ||
          e?.message?.includes('ResizeObserver loop completed') ||
          e?.reason?.message?.includes('ResizeObserver loop completion') ||
          e?.reason?.message?.includes('ResizeObserver loop completed'));
@@ -1116,7 +333,7 @@ export default function App() {
         const resizeObserverErr = document.getElementById('webpack-dev-server-client-overlay');
         if (resizeObserverErr) resizeObserverErr.style.display = 'none';
         if (resizeObserverErrDiv) resizeObserverErrDiv.style.display = 'none';
-        
+
         if (e.stopImmediatePropagation) e.stopImmediatePropagation();
         if (e.preventDefault) e.preventDefault();
       }
@@ -1154,8 +371,8 @@ export default function App() {
   const handleLogHistory = (item: HistoryItem) => {
     setHistory(prev => {
       const next = [item, ...prev];
-      const retention = activeWorkspace.envOverrides?.[activeEnvironmentId]?.uiConfig?.historyRetentionCount || 
-                        activeWorkspace.uiConfig?.historyRetentionCount || 
+      const retention = activeWorkspace.envOverrides?.[activeEnvironmentId]?.uiConfig?.historyRetentionCount ||
+                        activeWorkspace.uiConfig?.historyRetentionCount ||
                         50;
       return next.slice(0, retention);
     });
@@ -1275,7 +492,7 @@ export default function App() {
            </div>
             <div className="flex items-center gap-2">
               {!isCurrentlyDemo && (
-                <button 
+                <button
                   onClick={() => { setDemoMode(true); window.location.reload(); }}
                   className="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-colors shrink-0 bg-primary/10 text-primary hover:bg-primary/20"
                 >
@@ -1283,11 +500,11 @@ export default function App() {
                   Launch Interactive Demo
                 </button>
               )}
-              <button 
+              <button
                 onClick={() => void loadBootstrap()}
                 className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-colors shrink-0 ${
-                  bootstrapError.startsWith("Using local mock data") 
-                    ? "bg-warning/10 text-warning hover:bg-warning/20" 
+                  bootstrapError.startsWith("Using local mock data")
+                    ? "bg-warning/10 text-warning hover:bg-warning/20"
                     : "bg-error/10 text-error hover:bg-error/20"
                 }`}
               >
@@ -1336,7 +553,7 @@ export default function App() {
           />
 
           <LandscapeRail activeView={activeView} onNavigate={setActiveView} />
-         
+
           <main id="main-content" className="flex-1 flex flex-col overflow-hidden relative">
             <div className="flex-1 overflow-hidden relative">
               <AnimatePresence mode="wait">

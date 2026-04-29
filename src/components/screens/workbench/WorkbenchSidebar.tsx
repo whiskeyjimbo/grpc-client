@@ -6,8 +6,8 @@
 import React, { useRef, memo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronRight, Server, Network, CloudUpload, Trash2, Info } from 'lucide-react';
-import type { GrpcService, GrpcMethod, HistoryItem, ViewType } from '../types.ts';
-import { PanelHeader } from './index.ts';
+import type { GrpcService, GrpcMethod, HistoryItem, ViewType } from '../../../types.ts';
+import { PanelHeader } from '../../ui/index.ts';
 
 interface WorkspaceSidebarProps {
   services: GrpcService[];

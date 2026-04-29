@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { EnvVariable, GrpcField } from './types.ts';
+import type { EnvVariable, GrpcField } from '../types.ts';
 
 // ---------------------------------------------------------------------------
 // Entity IDs

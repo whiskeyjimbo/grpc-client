@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GrpcService, HistoryItem, EnvVariable, MetadataHeader, Environment, Workspace } from './types';
+import { GrpcService, HistoryItem, EnvVariable, MetadataHeader, Environment, Workspace } from '../types';
 
 export const MOCK_SERVICES: GrpcService[] = [
   {
@@ -141,7 +141,7 @@ export const MOCK_HISTORY: HistoryItem[] = [
     id: 'h2', 
     timestamp: '2023-10-27 14:31:45', 
     method: 'AuthService.ValidateToken', 
-    endpoint: 'api.staging.internal:9090', 
+    endpoint: 'grpc.staging.example.com:9090',
     status: 'OK', 
     latency: '18ms',
     requestPayload: { token: "ey..." },

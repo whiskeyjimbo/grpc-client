@@ -1,0 +1,194 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Barlow Condensed", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --breakpoint-xs: 480px;
+
+  /* Warm charcoal base — hue 62 tint keeps surfaces cohesive with amber primary */
+  --color-background:                oklch(22%   0.010 62);
+  --color-surface-dim:               oklch(22%   0.010 62);
+  --color-surface-bright:            oklch(46%   0.022 62);
+  --color-surface-container-lowest:  oklch(18%   0.008 62);
+  --color-surface-container-low:     oklch(27%   0.014 62);
+  --color-surface-container:         oklch(31%   0.016 62);
+  --color-surface-container-high:    oklch(35%   0.018 62);
+  --color-surface-container-highest: oklch(40%   0.020 62);
+
+  /* Warm off-white text — not the default cool blue-white */
+  --color-on-surface:         oklch(93% 0.012 65);
+  --color-on-surface-variant: oklch(76% 0.011 65);
+  --color-inverse-surface:    oklch(93% 0.012 65);
+  --color-inverse-on-surface: oklch(28% 0.012 65);
+
+  /* Borders and subtle structure */
+  --color-outline:         oklch(65% 0.011 65);
+  --color-outline-variant: oklch(42% 0.015 65);
+
+  /* Primary — amber/gold: active states, selections, primary buttons */
+  --color-primary:              oklch(76%  0.155 65);
+  --color-on-primary:           oklch(12%  0.05  65);
+  --color-primary-container:    oklch(52%  0.14  65);
+  --color-on-primary-container: oklch(10%  0.04  65);
+
+  /* Secondary — muted sage: Execute, Connect, live/streaming indicators */
+  --color-secondary:              oklch(62%  0.085 163);
+  --color-on-secondary:           oklch(12%  0.04  163);
+  --color-secondary-container:    oklch(43%  0.070 163);
+  --color-on-secondary-container: oklch(10%  0.03  163);
+
+  /* Tertiary — warm ochre: override tier, metadata, client-streaming badges */
+  --color-tertiary:    oklch(62%  0.082 76);
+  --color-on-tertiary: oklch(12%  0.04  76);
+
+  /* Semantic — clearly distinct from amber primary */
+  --color-success:         oklch(66%  0.125 152);
+  --color-success-container: oklch(26%  0.070 152);
+  --color-on-success-container: oklch(85% 0.050 152);
+
+  --color-warning:         oklch(82%  0.140 88);
+
+  --color-error:           oklch(68%  0.180 25);
+  --color-error-container: oklch(26%  0.090 25);
+
+  --radius-xs: 0.125rem;
+  --radius-DEFAULT: 0.25rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+
+  /* Motion — confident, decisive deceleration */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  --animate-spin-slow: spin-slow 8s linear infinite;
+
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  --animate-fade-in-up: fade-in-up 0.4s var(--ease-out-expo) both;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-on-surface);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scrollbar-gutter: stable;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+
+  button:focus-visible,
+  [role="switch"]:focus-visible,
+  [role="button"]:focus-visible,
+  select:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  a:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 50%, transparent);
+  }
+}
+
+/* Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-outline-variant) 30%, transparent) transparent;
+}
+
+/* Webkit (Chrome, Safari, Edge) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--color-outline-variant) 30%, transparent);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--color-outline-variant) 50%, transparent);
+}
+
+/* Typography role utilities
+ *
+ * type-eyebrow  — section/group markers (max tracking — the rarest, most dramatic)
+ * type-label    — field labels, column headers, panel section titles (half the tracking)
+ * type-btn      — button and CTA text (least tracking — readable at a glance)
+ *
+ * Color is NOT included — apply text-* companion classes as needed.
+ */
+.type-eyebrow {
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  opacity: 0.8;
+}
+
+.type-label {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.type-btn {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.type-display {
+  font-size: 22px;
+  font-weight: 900;
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+/* Oscilloscope Scanline Effect */
+.theme-oscilloscope::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.05),
+    rgba(0, 0, 0, 0.05) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  opacity: 0.4;
+}
+
+/* Demo Mode isolation */
+.forced-demo-mode .hide-in-demo {
+  display: none !important;
+}

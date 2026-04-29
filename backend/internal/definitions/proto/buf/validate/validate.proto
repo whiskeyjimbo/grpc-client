@@ -1,0 +1,335 @@
+// Bundled stub for buf/validate/validate.proto (protovalidate).
+// Field numbers are derived directly from the BSR Go SDK descriptors so that
+// proto.GetExtension can decode the extension data correctly at runtime.
+// Source: buf.build/bufbuild/protovalidate (Apache-2.0)
+syntax = "proto3";
+
+package buf.validate;
+
+option go_package = "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate";
+
+import "google/protobuf/descriptor.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+extend google.protobuf.MessageOptions {
+  MessageRules message = 1159;
+}
+
+extend google.protobuf.FieldOptions {
+  FieldRules field = 1159;
+}
+
+extend google.protobuf.OneofOptions {
+  OneofRules oneof = 1159;
+}
+
+// ── enums ─────────────────────────────────────────────────────────────────────
+
+enum Ignore {
+  IGNORE_UNSPECIFIED  = 0;
+  IGNORE_IF_ZERO_VALUE = 1;
+  IGNORE_ALWAYS       = 3;
+}
+
+enum KnownRegex {
+  KNOWN_REGEX_UNSPECIFIED       = 0;
+  KNOWN_REGEX_HTTP_HEADER_NAME  = 1;
+  KNOWN_REGEX_HTTP_HEADER_VALUE = 2;
+}
+
+// ── top-level constraint wrappers ─────────────────────────────────────────────
+
+message MessageRules {
+  repeated string cel_expression = 5;
+  repeated Rule   cel            = 3;
+  repeated MessageOneofRule oneof = 4;
+}
+
+message MessageOneofRule {
+  repeated string fields   = 1;
+  bool            required = 2;
+}
+
+message OneofRules {
+  bool required = 1;
+}
+
+message Rule {
+  string id         = 1;
+  string message    = 2;
+  string expression = 3;
+}
+
+// ── field-level rules ─────────────────────────────────────────────────────────
+
+message FieldRules {
+  repeated string cel_expression = 29;
+  repeated Rule   cel            = 23;
+  bool            required       = 25;
+  Ignore          ignore         = 27;
+
+  oneof type {
+    FloatRules    float     = 1;
+    DoubleRules   double    = 2;
+    Int32Rules    int32     = 3;
+    Int64Rules    int64     = 4;
+    UInt32Rules   uint32    = 5;
+    UInt64Rules   uint64    = 6;
+    SInt32Rules   sint32    = 7;
+    SInt64Rules   sint64    = 8;
+    Fixed32Rules  fixed32   = 9;
+    Fixed64Rules  fixed64   = 10;
+    SFixed32Rules sfixed32  = 11;
+    SFixed64Rules sfixed64  = 12;
+    BoolRules     bool      = 13;
+    StringRules   string    = 14;
+    BytesRules    bytes     = 15;
+    EnumRules     enum      = 16;
+    RepeatedRules repeated  = 18;
+    MapRules      map       = 19;
+    AnyRules      any       = 20;
+    DurationRules  duration  = 21;
+    TimestampRules timestamp = 22;
+    FieldMaskRules field_mask = 28;
+  }
+}
+
+// ── scalar rules ──────────────────────────────────────────────────────────────
+
+message FloatRules {
+  float          const   = 1;
+  repeated float in      = 6;
+  repeated float not_in  = 7;
+  bool           finite  = 8;
+  repeated float example = 9;
+  oneof less_than    { float lt  = 2; float lte = 3; }
+  oneof greater_than { float gt  = 4; float gte = 5; }
+}
+
+message DoubleRules {
+  double          const   = 1;
+  repeated double in      = 6;
+  repeated double not_in  = 7;
+  bool            finite  = 8;
+  repeated double example = 9;
+  oneof less_than    { double lt  = 2; double lte = 3; }
+  oneof greater_than { double gt  = 4; double gte = 5; }
+}
+
+message Int32Rules {
+  int32          const   = 1;
+  repeated int32 in      = 6;
+  repeated int32 not_in  = 7;
+  repeated int32 example = 8;
+  oneof less_than    { int32 lt  = 2; int32 lte = 3; }
+  oneof greater_than { int32 gt  = 4; int32 gte = 5; }
+}
+
+message Int64Rules {
+  int64          const   = 1;
+  repeated int64 in      = 6;
+  repeated int64 not_in  = 7;
+  repeated int64 example = 9;
+  oneof less_than    { int64 lt  = 2; int64 lte = 3; }
+  oneof greater_than { int64 gt  = 4; int64 gte = 5; }
+}
+
+message UInt32Rules {
+  uint32          const   = 1;
+  repeated uint32 in      = 6;
+  repeated uint32 not_in  = 7;
+  repeated uint32 example = 8;
+  oneof less_than    { uint32 lt  = 2; uint32 lte = 3; }
+  oneof greater_than { uint32 gt  = 4; uint32 gte = 5; }
+}
+
+message UInt64Rules {
+  uint64          const   = 1;
+  repeated uint64 in      = 6;
+  repeated uint64 not_in  = 7;
+  repeated uint64 example = 8;
+  oneof less_than    { uint64 lt  = 2; uint64 lte = 3; }
+  oneof greater_than { uint64 gt  = 4; uint64 gte = 5; }
+}
+
+message SInt32Rules {
+  sint32          const   = 1;
+  repeated sint32 in      = 6;
+  repeated sint32 not_in  = 7;
+  repeated sint32 example = 8;
+  oneof less_than    { sint32 lt  = 2; sint32 lte = 3; }
+  oneof greater_than { sint32 gt  = 4; sint32 gte = 5; }
+}
+
+message SInt64Rules {
+  sint64          const   = 1;
+  repeated sint64 in      = 6;
+  repeated sint64 not_in  = 7;
+  repeated sint64 example = 8;
+  oneof less_than    { sint64 lt  = 2; sint64 lte = 3; }
+  oneof greater_than { sint64 gt  = 4; sint64 gte = 5; }
+}
+
+message Fixed32Rules {
+  fixed32          const   = 1;
+  repeated fixed32 in      = 6;
+  repeated fixed32 not_in  = 7;
+  repeated fixed32 example = 8;
+  oneof less_than    { fixed32 lt  = 2; fixed32 lte = 3; }
+  oneof greater_than { fixed32 gt  = 4; fixed32 gte = 5; }
+}
+
+message Fixed64Rules {
+  fixed64          const   = 1;
+  repeated fixed64 in      = 6;
+  repeated fixed64 not_in  = 7;
+  repeated fixed64 example = 8;
+  oneof less_than    { fixed64 lt  = 2; fixed64 lte = 3; }
+  oneof greater_than { fixed64 gt  = 4; fixed64 gte = 5; }
+}
+
+message SFixed32Rules {
+  sfixed32          const   = 1;
+  repeated sfixed32 in      = 6;
+  repeated sfixed32 not_in  = 7;
+  repeated sfixed32 example = 8;
+  oneof less_than    { sfixed32 lt  = 2; sfixed32 lte = 3; }
+  oneof greater_than { sfixed32 gt  = 4; sfixed32 gte = 5; }
+}
+
+message SFixed64Rules {
+  sfixed64          const   = 1;
+  repeated sfixed64 in      = 6;
+  repeated sfixed64 not_in  = 7;
+  repeated sfixed64 example = 8;
+  oneof less_than    { sfixed64 lt  = 2; sfixed64 lte = 3; }
+  oneof greater_than { sfixed64 gt  = 4; sfixed64 gte = 5; }
+}
+
+message BoolRules {
+  bool          const   = 1;
+  repeated bool example = 2;
+}
+
+// ── string / bytes ────────────────────────────────────────────────────────────
+
+message StringRules {
+  string          const        = 1;
+  uint64          len          = 19;
+  uint64          min_len      = 2;
+  uint64          max_len      = 3;
+  uint64          len_bytes    = 20;
+  uint64          min_bytes    = 4;
+  uint64          max_bytes    = 5;
+  string          pattern      = 6;
+  string          prefix       = 7;
+  string          suffix       = 8;
+  string          contains     = 9;
+  string          not_contains = 23;
+  repeated string in           = 10;
+  repeated string not_in       = 11;
+  bool            strict       = 25;
+  repeated string example      = 34;
+
+  oneof well_known {
+    bool       email               = 12;
+    bool       hostname            = 13;
+    bool       ip                  = 14;
+    bool       ipv4                = 15;
+    bool       ipv6                = 16;
+    bool       uri                 = 17;
+    bool       uri_ref             = 18;
+    bool       address             = 21;
+    bool       uuid                = 22;
+    bool       tuuid               = 33;
+    bool       ip_with_prefixlen   = 26;
+    bool       ipv4_with_prefixlen = 27;
+    bool       ipv6_with_prefixlen = 28;
+    bool       ip_prefix           = 29;
+    bool       ipv4_prefix         = 30;
+    bool       ipv6_prefix         = 31;
+    bool       host_and_port       = 32;
+    bool       ulid                = 35;
+    bool       protobuf_fqn        = 37;
+    bool       protobuf_dot_fqn    = 38;
+    KnownRegex well_known_regex    = 24;
+  }
+}
+
+message BytesRules {
+  bytes          const   = 1;
+  uint64         len     = 13;
+  uint64         min_len = 2;
+  uint64         max_len = 3;
+  string         pattern = 4;
+  bytes          prefix  = 5;
+  bytes          suffix  = 6;
+  bytes          contains = 7;
+  repeated bytes in      = 8;
+  repeated bytes not_in  = 9;
+  repeated bytes example = 14;
+
+  oneof well_known {
+    bool ip   = 10;
+    bool ipv4 = 11;
+    bool ipv6 = 12;
+    bool uuid = 15;
+  }
+}
+
+// ── composite rules ───────────────────────────────────────────────────────────
+
+message EnumRules {
+  int32          const        = 1;
+  bool           defined_only = 2;
+  repeated int32 in           = 3;
+  repeated int32 not_in       = 4;
+  repeated int32 example      = 5;
+}
+
+message RepeatedRules {
+  uint64     min_items = 1;
+  uint64     max_items = 2;
+  bool       unique    = 3;
+  FieldRules items     = 4;
+}
+
+message MapRules {
+  uint64     min_pairs = 1;
+  uint64     max_pairs = 2;
+  FieldRules keys      = 4;
+  FieldRules values    = 5;
+}
+
+message AnyRules {
+  repeated string in     = 2;
+  repeated string not_in = 3;
+}
+
+message FieldMaskRules {
+  google.protobuf.FieldMask const   = 1;
+  repeated string           in      = 2;
+  repeated string           not_in  = 3;
+  repeated google.protobuf.FieldMask example = 4;
+}
+
+// ── well-known type rules ─────────────────────────────────────────────────────
+
+message DurationRules {
+  google.protobuf.Duration          const   = 2;
+  repeated google.protobuf.Duration in      = 7;
+  repeated google.protobuf.Duration not_in  = 8;
+  repeated google.protobuf.Duration example = 9;
+  oneof less_than    { google.protobuf.Duration lt  = 3; google.protobuf.Duration lte = 4; }
+  oneof greater_than { google.protobuf.Duration gt  = 5; google.protobuf.Duration gte = 6; }
+}
+
+message TimestampRules {
+  google.protobuf.Timestamp          const   = 2;
+  google.protobuf.Duration           within  = 9;
+  repeated google.protobuf.Timestamp example = 10;
+  oneof less_than    { google.protobuf.Timestamp lt = 3; google.protobuf.Timestamp lte = 4; bool lt_now = 7; }
+  oneof greater_than { google.protobuf.Timestamp gt = 5; google.protobuf.Timestamp gte = 6; bool gt_now = 8; }
+}

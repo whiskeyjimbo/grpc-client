@@ -1,0 +1,138 @@
+syntax = "proto3";
+
+package sample.v1;
+
+option go_package = "sample/v1;samplev1";
+
+import "buf/validate/validate.proto";
+import "validate/validate.proto";
+
+// ── buf validate (protovalidate) examples ────────────────────────────────────
+
+service OrderService {
+  rpc PlaceOrder(PlaceOrderRequest) returns (PlaceOrderResponse);
+  rpc SearchOrders(SearchOrdersRequest) returns (SearchOrdersResponse);
+  rpc UpdateInventory(UpdateInventoryRequest) returns (UpdateInventoryResponse);
+}
+
+message PlaceOrderRequest {
+  // Required string with prefix and min/max length.
+  string order_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 4,
+    (buf.validate.field).string.max_len = 64,
+    (buf.validate.field).string.prefix = "ord_"
+  ];
+
+  // Must be a valid email address.
+  string customer_email = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.email = true
+  ];
+
+  // Positive integer, 1–1000.
+  int32 quantity = 3 [
+    (buf.validate.field).int32.gt = 0,
+    (buf.validate.field).int32.lte = 1000
+  ];
+
+  // Positive decimal.
+  double unit_price = 4 [
+    (buf.validate.field).double.gt = 0.0
+  ];
+
+  // Allowed values only.
+  string currency = 5 [
+    (buf.validate.field).string.in = "USD",
+    (buf.validate.field).string.in = "EUR",
+    (buf.validate.field).string.in = "GBP"
+  ];
+
+  // Must match shipping address message constraints.
+  ShippingAddress shipping_address = 6 [
+    (buf.validate.field).required = true
+  ];
+
+  // CEL cross-field rule on the message.
+  option (buf.validate.message).cel = {
+    id: "price_check",
+    message: "unit_price must be positive when quantity is set",
+    expression: "this.quantity == 0 || this.unit_price > 0"
+  };
+}
+
+message ShippingAddress {
+  string street   = 1 [(buf.validate.field).string.min_len = 1];
+  string city     = 2 [(buf.validate.field).string.min_len = 1];
+  string zip      = 3 [(buf.validate.field).string.pattern = "^[0-9]{5}(-[0-9]{4})?$"];
+  string country  = 4 [(buf.validate.field).string.len = 2];
+}
+
+message PlaceOrderResponse {
+  string order_id = 1;
+  string status   = 2;
+}
+
+// ── string format examples ───────────────────────────────────────────────────
+
+message SearchOrdersRequest {
+  // Standard UUID for correlation.
+  string request_id = 1 [(buf.validate.field).string.uuid = true];
+
+  // Free-text filter — bounded length.
+  string query = 2 [
+    (buf.validate.field).string.max_len = 256
+  ];
+
+  // Pagination: 1-based page, max 100 results per page.
+  int32 page = 3 [
+    (buf.validate.field).int32.gte = 1
+  ];
+  int32 page_size = 4 [
+    (buf.validate.field).int32.gt = 0,
+    (buf.validate.field).int32.lte = 100
+  ];
+
+  // Optional hostname for a regional endpoint.
+  string region_host = 5 [(buf.validate.field).string.hostname = true];
+}
+
+message SearchOrdersResponse {
+  repeated PlaceOrderResponse orders = 1;
+  int32 total = 2;
+}
+
+// ── protoc-gen-validate (PGV) examples ───────────────────────────────────────
+
+message UpdateInventoryRequest {
+  // PGV required string.
+  string sku = 1 [(validate.rules).string = {min_len: 1, max_len: 64, pattern: "^[A-Z0-9-]+$"}];
+
+  // PGV positive int.
+  int32 delta = 2 [(validate.rules).int32 = {gt: -10000, lt: 10000}];
+
+  // PGV enum: only defined values accepted.
+  AdjustmentReason reason = 3 [(validate.rules).enum.defined_only = true];
+
+  // PGV repeated with size constraint.
+  repeated string tags = 4 [(validate.rules).repeated = {max_items: 10}];
+
+  // PGV message-required sub-message.
+  AuditInfo audit = 5 [(validate.rules).message.required = true];
+}
+
+message AuditInfo {
+  string operator_id = 1 [(validate.rules).string.min_len = 1];
+  string note        = 2 [(validate.rules).string.max_len = 512];
+}
+
+enum AdjustmentReason {
+  ADJUSTMENT_REASON_UNSPECIFIED = 0;
+  ADJUSTMENT_REASON_SALE        = 1;
+  ADJUSTMENT_REASON_RETURN      = 2;
+  ADJUSTMENT_REASON_DAMAGE      = 3;
+}
+
+message UpdateInventoryResponse {
+  int32 new_quantity = 1;
+}

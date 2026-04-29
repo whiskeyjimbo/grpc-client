@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>gRPC Client</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" />
+    <script>
+      // Suppress ResizeObserver loop errors as early as possible
+      window.addEventListener('error', (e) => {
+        if (e.message && e.message.includes('ResizeObserver')) {
+          const overlay = document.getElementById('webpack-dev-server-client-overlay') ||
+                          document.getElementById('vite-error-overlay');
+          if (overlay) overlay.style.display = 'none';
+          e.stopImmediatePropagation();
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

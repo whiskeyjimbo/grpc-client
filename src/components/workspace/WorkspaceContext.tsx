@@ -56,6 +56,8 @@ export function WorkspaceProvider({
     _setRequestData(prev => {
       const next = { ...prev };
       const keys = path.split('.');
+      const dangerous = new Set(['__proto__', 'constructor', 'prototype']);
+      if (keys.some(k => dangerous.has(k))) return prev;
       let current = next;
       for (let i = 0; i < keys.length - 1; i++) {
         current[keys[i]] = { ...current[keys[i]] };

@@ -60,8 +60,16 @@ export function WorkspaceProvider({
       if (keys.some(k => dangerous.has(k))) return prev;
       let current = next;
       for (let i = 0; i < keys.length - 1; i++) {
-        current[keys[i]] = { ...current[keys[i]] };
-        current = current[keys[i]];
+        const key = keys[i];
+        const hasOwn = Object.prototype.hasOwnProperty.call(current, key);
+        const existing = hasOwn ? current[key] : undefined;
+        const isPlainObject =
+          typeof existing === 'object' &&
+          existing !== null &&
+          !Array.isArray(existing);
+
+        current[key] = isPlainObject ? { ...existing } : {};
+        current = current[key];
       }
       current[keys[keys.length - 1]] = value;
 

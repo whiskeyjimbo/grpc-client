@@ -11,7 +11,7 @@ import {
 import type { Workspace, Environment, GrpcMethod, EnvVariable, GrpcService } from '../../../types.ts';
 import { createEntityID } from '../../../lib/utils.ts';
 import { PanelHeader, DynamicField } from '../../ui/index.ts';
-import { useWorkspace } from './WorkspaceContext.tsx';
+import { useWorkspace, useRequestData } from './WorkspaceContext.tsx';
 
 interface RequestEditorProps {
   workspace: Workspace;
@@ -36,12 +36,8 @@ export function RequestEditor({
   hasEndpoint,
   selectedServiceName,
 }: RequestEditorProps) {
-  const { 
-    selectedMethod, 
-    requestData, 
-    updateRequestData, 
-    isExecuting 
-  } = useWorkspace();
+  const { selectedMethod, isExecuting } = useWorkspace();
+  const { requestData, updateRequestData } = useRequestData();
 
   return (
     <div className="flex-1 min-w-0 md:min-w-[280px] flex flex-col overflow-hidden">

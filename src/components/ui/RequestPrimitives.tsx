@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, type FC } from 'react';
+import React, { useState, useMemo, type FC } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Search, X } from 'lucide-react';
 import type { EnvVariable, GrpcField } from '../../types.ts';
@@ -106,6 +106,22 @@ export const ChipTooltip: FC<{
 // HighlightedInput
 // ---------------------------------------------------------------------------
 
+const VAR_REGEX = /\{\{[^}]+\}\}/g;
+
+function parseVarParts(text: string): { text: string; isVar: boolean }[] {
+  const parts: { text: string; isVar: boolean }[] = [];
+  VAR_REGEX.lastIndex = 0;
+  let lastIndex = 0;
+  let match;
+  while ((match = VAR_REGEX.exec(text)) !== null) {
+    if (match.index > lastIndex) parts.push({ text: text.substring(lastIndex, match.index), isVar: false });
+    parts.push({ text: match[0], isVar: true });
+    lastIndex = VAR_REGEX.lastIndex;
+  }
+  if (lastIndex < text.length) parts.push({ text: text.substring(lastIndex), isVar: false });
+  return parts;
+}
+
 export const HighlightedInput = React.memo(({
   value,
   onChange,
@@ -124,20 +140,7 @@ export const HighlightedInput = React.memo(({
   ariaLabel?: string;
 }) => {
   const { missing } = resolveVariables(value, variables);
-
-  const findVars = (text: string) => {
-    const parts: { text: string; isVar: boolean }[] = [];
-    const regex = /\{\{[^}]+\}\}/g;
-    let lastIndex = 0;
-    let match;
-    while ((match = regex.exec(text)) !== null) {
-      if (match.index > lastIndex) parts.push({ text: text.substring(lastIndex, match.index), isVar: false });
-      parts.push({ text: match[0], isVar: true });
-      lastIndex = regex.lastIndex;
-    }
-    if (lastIndex < text.length) parts.push({ text: text.substring(lastIndex), isVar: false });
-    return parts;
-  };
+  const varParts = useMemo(() => parseVarParts(value), [value]);
 
   return (
     <div className="relative group">
@@ -146,7 +149,7 @@ export const HighlightedInput = React.memo(({
         className={`absolute inset-0 px-4 py-2 text-xs font-mono pointer-events-none whitespace-pre-wrap ${className}`}
         style={{ color: 'transparent' }}
       >
-        {findVars(value).map((part, i) => (
+        {varParts.map((part, i) => (
           <span
             key={i}
             className={

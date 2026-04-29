@@ -7,16 +7,34 @@ import React, { createContext, useContext, useState, useCallback, useMemo, useRe
 import type { GrpcMethod, EnvVariable, MetadataHeader } from '../../../types.ts';
 import { sanitizeRequestDataForFields } from '../../../lib/utils.ts';
 
-interface WorkspaceContextType {
+// ---------------------------------------------------------------------------
+// RequestDataContext — high-frequency (updates every keystroke)
+// ---------------------------------------------------------------------------
+
+interface RequestDataContextType {
   requestData: Record<string, any>;
   updateRequestData: (path: string, value: any) => void;
   setRequestData: (data: Record<string, any>) => void;
-  
+}
+
+const RequestDataContext = createContext<RequestDataContextType | undefined>(undefined);
+
+export function useRequestData() {
+  const ctx = useContext(RequestDataContext);
+  if (ctx === undefined) throw new Error('useRequestData must be used within WorkspaceProvider');
+  return ctx;
+}
+
+// ---------------------------------------------------------------------------
+// WorkspaceContext — low-frequency (method selection, execution state, overrides)
+// ---------------------------------------------------------------------------
+
+interface WorkspaceContextType {
   response: any;
   setResponse: (r: any) => void;
   isExecuting: boolean;
   setIsExecuting: (e: boolean) => void;
-  
+
   selectedMethod: GrpcMethod | null;
   setSelectedMethod: (m: GrpcMethod | null) => void;
 
@@ -30,10 +48,10 @@ interface WorkspaceContextType {
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
 
-export function WorkspaceProvider({ 
+export function WorkspaceProvider({
   children,
   workspaceId,
-}: { 
+}: {
   children: React.ReactNode;
   workspaceId: string;
 }) {
@@ -47,6 +65,10 @@ export function WorkspaceProvider({
   const [contextOpen, setContextOpen] = useState(() => {
     try { return localStorage.getItem('grpc:ui:contextOpen') === 'true'; } catch { return false; }
   });
+
+  // Keep a stable ref to selectedMethod so updateRequestData doesn't change identity on every method switch
+  const selectedMethodRef = useRef(selectedMethod);
+  selectedMethodRef.current = selectedMethod;
 
   const setRequestData = useCallback((data: Record<string, any>) => {
     _setRequestData(data);
@@ -73,20 +95,24 @@ export function WorkspaceProvider({
       }
       current[keys[keys.length - 1]] = value;
 
-      if (selectedMethod) {
+      const method = selectedMethodRef.current;
+      if (method) {
         try {
-          localStorage.setItem(`grpc:req:${workspaceId}:${selectedMethod.id}`, JSON.stringify(next));
+          localStorage.setItem(`grpc:req:${workspaceId}:${method.id}`, JSON.stringify(next));
         } catch { /* storage quota exceeded */ }
       }
 
       return next;
     });
-  }, [selectedMethod, workspaceId]);
+  }, [workspaceId]);
 
-  const value = useMemo(() => ({
+  const requestDataValue = useMemo(() => ({
     requestData,
     updateRequestData,
     setRequestData,
+  }), [requestData, updateRequestData, setRequestData]);
+
+  const workspaceValue = useMemo(() => ({
     response,
     setResponse,
     isExecuting,
@@ -99,12 +125,14 @@ export function WorkspaceProvider({
     setHeaderOverrides,
     contextOpen,
     setContextOpen,
-  }), [requestData, updateRequestData, setRequestData, response, isExecuting, selectedMethod, varOverrides, headerOverrides, contextOpen]);
+  }), [response, isExecuting, selectedMethod, varOverrides, headerOverrides, contextOpen]);
 
   return (
-    <WorkspaceContext.Provider value={value}>
-      {children}
-    </WorkspaceContext.Provider>
+    <RequestDataContext.Provider value={requestDataValue}>
+      <WorkspaceContext.Provider value={workspaceValue}>
+        {children}
+      </WorkspaceContext.Provider>
+    </RequestDataContext.Provider>
   );
 }
 

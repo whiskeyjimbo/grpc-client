@@ -12,7 +12,7 @@ import type { Workspace, Environment, GrpcService, GrpcMethod, EnvVariable, Hist
 import { createEntityID, sanitizeRequestDataForFields, getErrorMessage, maskValue, cleanPayload } from '../../lib/utils.ts';
 import { WorkbenchSidebar } from './workbench/WorkbenchSidebar.tsx';
 import { executeRequest } from '../../api/index.ts';
-import { WorkspaceProvider, useWorkspace } from './workbench/WorkspaceContext.tsx';
+import { WorkspaceProvider, useWorkspace, useRequestData } from './workbench/WorkspaceContext.tsx';
 import { ExecutionContext } from './workbench/ExecutionContext.tsx';
 import { RequestEditor } from './workbench/RequestEditor.tsx';
 import { WorkbenchResponsePanel } from './workbench/WorkbenchResponsePanel.tsx';
@@ -71,13 +71,10 @@ function WorkbenchContent({
   onUpdateEnvironment: (e: Environment) => void,
   onShowToast: (tone: 'success' | 'error', message: string, onUndo?: () => void) => void,
 }) {
-  const { 
-    requestData, 
-    updateRequestData, 
-    setRequestData, 
-    response, 
-    setResponse, 
-    isExecuting, 
+  const {
+    response,
+    setResponse,
+    isExecuting,
     setIsExecuting,
     selectedMethod,
     setSelectedMethod,
@@ -88,6 +85,7 @@ function WorkbenchContent({
     contextOpen,
     setContextOpen
   } = useWorkspace();
+  const { requestData, setRequestData } = useRequestData();
 
   const [expandedServices, setExpandedServices] = useState<string[]>(() => {
     if (initialMethodId) {

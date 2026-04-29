@@ -15,7 +15,7 @@ function ExecutionTimer({ isExecuting }: { isExecuting: boolean }) {
   useEffect(() => {
     if (!isExecuting) { setElapsedMs(0); return; }
     const start = Date.now();
-    const id = setInterval(() => setElapsedMs(Date.now() - start), 100);
+    const id = setInterval(() => setElapsedMs(Date.now() - start), 200);
     return () => clearInterval(id);
   }, [isExecuting]);
   return <span className="text-xs font-mono tabular-nums text-on-surface-variant/60">{(elapsedMs / 1000).toFixed(1)}s</span>;

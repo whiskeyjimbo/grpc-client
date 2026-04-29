@@ -393,6 +393,8 @@ export function VariablesScreen({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingKey, setEditingKey] = useState('');
   const [editingValue, setEditingValue] = useState('');
+  const editingKeyRef = useRef('');
+  const editingValueRef = useRef('');
   const [addTier, setAddTier] = useState<'ENV' | 'WS' | 'OVERRIDE'>('ENV');
   const [addKey, setAddKey] = useState('');
   const [addValue, setAddValue] = useState('');
@@ -448,11 +450,20 @@ export function VariablesScreen({
     return base.filter(i => i.key.toLowerCase().includes(q) || i.value.toLowerCase().includes(q));
   }, [tierFilter, resolvedItems, allItems, searchQuery]);
 
-  const handleEditStart = useCallback((item: FlatItem) => { setEditingId(item.id); setEditingKey(item.key); setEditingValue(item.value); }, []);
+  const handleEditStart = useCallback((item: FlatItem) => {
+    editingKeyRef.current = item.key;
+    editingValueRef.current = item.value;
+    setEditingId(item.id);
+    setEditingKey(item.key);
+    setEditingValue(item.value);
+  }, []);
   const handleEditCancel = useCallback(() => setEditingId(null), []);
 
+  const handleKeyChange = useCallback((v: string) => { editingKeyRef.current = v; setEditingKey(v); }, []);
+  const handleValueChange = useCallback((v: string) => { editingValueRef.current = v; setEditingValue(v); }, []);
+
   const handleEditCommit = useCallback((item: FlatItem) => {
-    const key = editingKey.trim(); const value = editingValue.trim();
+    const key = editingKeyRef.current.trim(); const value = editingValueRef.current.trim();
     if (!key) { handleEditCancel(); return; }
     const updated = { id: item.id, key, value };
     const sliceKey = itemType as 'variables' | 'headers';
@@ -468,7 +479,7 @@ export function VariablesScreen({
       onUpdateWorkspace({ ...workspace, envOverrides: { ...(workspace.envOverrides || {}), [environment.id]: { ...envSlice, [sliceKey]: arr } } });
     }
     setEditingId(null);
-  }, [editingKey, editingValue, handleEditCancel, itemType, workspace, environment, onUpdateEnvironment, onUpdateWorkspace]);
+  }, [handleEditCancel, itemType, workspace, environment, onUpdateEnvironment, onUpdateWorkspace]);
 
   const executeDelete = useCallback((item: FlatItem) => {
     const snapEnv = { ...environment };
@@ -797,8 +808,8 @@ export function VariablesScreen({
                       onEditCommit={handleEditCommit}
                       onEditCancel={handleEditCancel}
                       onDelete={setItemToDelete}
-                      onKeyChange={setEditingKey}
-                      onValueChange={setEditingValue}
+                      onKeyChange={handleKeyChange}
+                      onValueChange={handleValueChange}
                     />
                   ))}
                 </AnimatePresence>

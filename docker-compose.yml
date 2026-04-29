@@ -19,13 +19,8 @@ services:
     environment:
       PORT: "8089"
       DB_PATH: /data/grpcclient.db
-      SCTEST_WORKSPACE_ROOT: /workspace
-      SCTEST_PROJECT_DIR: /workspace/ser-api-scenario-test
-      SCTEST_ALLOWED_SUITE_ROOTS: ser-api-scenario-test/examples,ser-switchboard/test/sctest
-      SCTEST_DEFAULT_RUN_TIMEOUT_SECONDS: "120"
     volumes:
       - sqlite_data:/data
-      - ..:/workspace:ro
 
 volumes:
   sqlite_data:

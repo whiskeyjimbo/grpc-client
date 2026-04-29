@@ -127,7 +127,7 @@ export const MOCK_HISTORY: HistoryItem[] = [
     status: 'OK', 
     latency: '42ms',
     requestPayload: { user_id: "usr_123" },
-    responsePayload: { id: "usr_123", username: "jrose", email: "mrjeffrose@gmail.com" },
+    responsePayload: { id: "usr_123", username: "demo_user", email: "user@example.com" },
     environmentId: 'env1',
     environmentName: 'Local Dev',
     workspaceId: 'w1',
